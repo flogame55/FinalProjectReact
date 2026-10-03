@@ -31,80 +31,60 @@
 ### 3. Typography & Spacing
 - **Font หลัก:** `DM Sans` สำหรับเนื้อหาและ UI ทั่วไป
 - **Font ตัวเลข/โค้ด:** `JetBrains Mono` สำหรับตัวเลข Countdown และสถิติ
-- **Spacing Grid:** ใช้มาตราส่วนฐาน 4px (padding: 8, 12, 16, 24px / gap: 20-24px)
 - **Elevation / Shadow:** การ์ดปกติจะแบนราบ (Flat) มีขอบ 1px แต่ตอน Hover จะลอยขึ้น `-2px` (`hover:-translate-y-0.5`) พร้อมเงาบางเบา (`hover:shadow-md`)
 
 ---
 
-## 👥 ตารางแบ่งงานและความรับผิดชอบของแต่ละคน
+## 👥 ตารางแบ่งงานและความรับผิดชอบของแต่ละคน (อัปเดต: สลับงานให้โฟได้ทำ Supabase)
 
 ```mermaid
 graph TD
-  K1["👤 กิต: Database + Products API"] --> K2["👤 กิต: หน้า / และ /products"]
-  F1["👤 โฟ: PauseCartContext"] --> P1["👤 พี: หน้า /products/[id]"]
-  F1 --> F2["👤 โฟ: หน้า /cart + Countdown"]
-  F1 --> P2["👤 พี: หน้า /ready + ฟอร์ม Checkout"]
-  P2 --> S["👤 พี+โฟ: Server Actions (actions.js)"]
-  S --> F3["👤 โฟ: หน้า /history + กราฟ Recharts"]
+  F_DB["👤 โฟ: Supabase Database + Storage + Seeding"] --> F_LIB["👤 โฟ: lib/products.js (Supabase Queries)"]
+  F_LIB --> K_PROD["👤 กิต: หน้าสินค้า / และ /products"]
+  F_CTX["👤 โฟ: PauseCartContext + หน้า /cart"] --> P_DET["👤 พี: หน้า /products/[id] + PauseButton"]
+  F_CTX --> P_RDY["👤 พี: หน้า /ready + ฟอร์ม Checkout"]
+  P_RDY --> P_ACT["👤 พี: Server Actions (actions.js) บันทึก DecisionLog"]
+  P_ACT --> K_HIST["👤 กิต: หน้า /history + กราฟ Recharts"]
 ```
 
 ---
 
-### 👤 โฟ — ระบบตะกร้าพัก, ตัวนับเวลา, และแดชบอร์ดสถิติ
+### 👤 โฟ — Supabase Data Layer, Products API, และระบบตะกร้าพัก
 
-| ไฟล์ | หน้าที่ | งานที่ต้องทำ (TODO) |
+| ไฟล์ | หน้าที่ | สิ่งที่ต้องทำ (TODO) |
 |---|---|---|
-| [`context/PauseCartContext.jsx`](./context/PauseCartContext.jsx) | Global State ตะกร้าพัก | จัดการ state `items`, sync `localStorage` ('pause-cart'), ตรรกะ `addItem`, `removeItem`, `skipItem`, และ `readyItems` |
-| [`components/Countdown.jsx`](./components/Countdown.jsx) | ตัวนับเวลา Real-time | เขียน `useEffect` + `setInterval` นับถอยหลัง, แปลงเวลา (วัน/ชม./นาที/วิ) ด้วยฟอนต์ JetBrains Mono, รองรับโหมดเร่งเวลา Dev Mode |
-| [`components/HistoryChart.jsx`](./components/HistoryChart.jsx) | กราฟ Recharts | เรนเดอร์ BarChart/PieChart สรุปสัดส่วน ซื้อจริง vs ผ่าน vs ข้ามเวลา ด้วยสี Success/Indigo/Error |
-| [`app/cart/page.jsx`](./app/cart/page.jsx) | หน้าตะกร้าพัก | แสดงรายการสินค้าที่กำลังนับถอยหลัง, ปุ่มยกเลิก, ปุ่มข้าม, สวิตช์ toggle เปิด/ปิด Dev Fast-forward |
-| [`app/history/page.jsx`](./app/history/page.jsx) | หน้าสถิติ (Insights) | Query จาก `DecisionLog` ใน Supabase สรุปยอดเงินที่ประหยัดได้, ยอดซื้อจริง และแสดงกราฟ |
+| [`supabase/schema.sql`](./supabase/schema.sql) | Database Schema | ออกแบบและรันคำสั่ง SQL สร้างตาราง `Product`, `DecisionLog`, Foreign Key, Indexes และสร้าง Bucket `product-images` บน Supabase |
+| [`scripts/seed.js`](./scripts/seed.js) | Seeding Script | เขียนสคริปต์อัปโหลดรูปภาพสินค้าขึ้น Supabase Storage และยัดข้อมูลจำลองลงตาราง `Product` |
+| [`lib/products.js`](./lib/products.js) | Supabase Products Query | เขียนฟังก์ชัน query ข้อมูลสินค้าจากตาราง `Product` ใน Supabase (`getProducts({ q, category })` และ `getProductById(id)`) |
+| [`context/PauseCartContext.jsx`](./context/PauseCartContext.jsx) | Global State ตะกร้าพัก | จัดการ state ตะกร้าพัก, ซิงก์กับ `localStorage`, ฟังก์ชัน `addItem`, `removeItem`, `skipItem`, และสวิตช์ `devFastForward` |
+| [`app/cart/page.jsx`](./app/cart/page.jsx) | หน้าตะกร้าพัก (Cooling-off) | หน้ารวมสินค้าที่กำลังนับถอยหลังพักคิด พร้อมปุ่มยกเลิก และสวิตช์ Dev FastForward |
 
 ---
 
-### 👤 กิต — Data Layer, แคตตาล็อกสินค้า, และหน้าแรก
+### 👤 กิต — หน้ารายการสินค้า, การ์ดสินค้า, และแดชบอร์ดสถิติ
 
-| ไฟล์ | หน้าที่ | งานที่ต้องทำ (TODO) |
+| ไฟล์ | หน้าที่ | สิ่งที่ต้องทำ (TODO) |
 |---|---|---|
-| [`supabase/schema.sql`](./supabase/schema.sql) | โครงสร้าง Database | นำคำสั่งไปรันสร้างตาราง `Product`, `DecisionLog` บน Supabase และสร้าง bucket `product-images` |
-| [`scripts/seed.js`](./scripts/seed.js) | Seed ข้อมูลเริ่มต้น | ใส่รายการสินค้าตัวอย่างและอัปโหลดรูปขึ้น Supabase Storage |
-| [`lib/products.js`](./lib/products.js) | Data Fetching Helper | เขียน query `getProducts({ q, category })` และ `getProductById(id)` จากตาราง Product |
-| [`components/ProductCard.jsx`](./components/ProductCard.jsx) | การ์ดสินค้า (ใช้ซ้ำ) | ออกแบบการ์ด 12px radius, แสดงรูป 180-200px, ชื่อ, ราคา, หมวดหมู่, hover effect -2px |
-| [`components/SearchFilter.jsx`](./components/SearchFilter.jsx) | ค้นหา & ตัวกรอง | Input ค้นหา + Select หมวดหมู่ ซิงก์ค่าลงใน URL Query String (`?q=...&category=...`) |
-| [`app/page.jsx`](./app/page.jsx) | หน้าแรก (Landing) | Hero Section แนะนำ Pause concept + แสดงการ์ดสินค้าแนะนำ 3-4 ชิ้น |
-| [`app/products/page.jsx`](./app/products/page.jsx) | หน้ารายการสินค้า | Server Component ดึงสินค้าตาม `searchParams` แสดงผลพร้อม `<SearchFilter />` และสถานะไม่พบสินค้า |
+| [`components/ProductCard.jsx`](./components/ProductCard.jsx) | การ์ดสินค้า (UI Component) | ออกแบบการ์ดสินค้าตาม `genesis-DESIGN.md` (radius 12px, hover lift -2px, แสดงรูป, ราคา, หมวดหมู่) |
+| [`components/SearchFilter.jsx`](./components/SearchFilter.jsx) | แถบค้นหาและตัวกรอง | ช่องค้นหาชื่อสินค้าและ Dropdown หมวดหมู่ ซิงก์กับ URL Query parameters (`?q=...&category=...`) |
+| [`app/page.jsx`](./app/page.jsx) | หน้าแรก (Landing & Showcase) | Hero Section คอนเซปต์ "Pause" + แสดงการ์ดสินค้าแนะนำ |
+| [`app/products/page.jsx`](./app/products/page.jsx) | หน้ารายการสินค้าทั้งหมด | ดึงข้อมูลสินค้าผ่าน `getProducts` แสดงใน Grid พร้อมตัวกรอง |
+| [`components/Countdown.jsx`](./components/Countdown.jsx) | ตัวนับเวลาถอยหลัง | เขียน `useEffect` + `setInterval` นับถอยหลัง ชม:นาที:วินาที (JetBrains Mono) |
+| [`components/HistoryChart.jsx`](./components/HistoryChart.jsx) | กราฟ Recharts | เรนเดอร์กราฟเปรียบเทียบสัดส่วน ซื้อจริง vs ไม่ซื้อ vs ข้ามเวลา |
+| [`app/history/page.jsx`](./app/history/page.jsx) | หน้าสถิติ (Insights) | สรุปยอดเงินที่ประหยัดได้, ยอดซื้อจริง และแสดงกราฟ `HistoryChart` |
 
 ---
 
 ### 👤 พี — โครงสร้าง Layout, หน้ารายละเอียด, และหน้าตัดสินใจ
 
-| ไฟล์ | หน้าที่ | งานที่ต้องทำ (TODO) |
+| ไฟล์ | หน้าที่ | สิ่งที่ต้องทำ (TODO) |
 |---|---|---|
-| [`app/layout.jsx`](./app/layout.jsx) & [`components/Nav.jsx`](./components/Nav.jsx) | Layout & Navbar | จัด Navbar sticky 56px, backdrop-blur, ลิงก์ 5 หน้า, และ `<CartBadge />` แสดงจำนวนของในตะกร้า |
-| [`components/CartBadge.jsx`](./components/CartBadge.jsx) | Badge ตัวเลขตะกร้า | ดึง `count` จาก `usePauseCart()` แสดง badge วงกลม (ไม่แสดงถ้า count = 0) |
-| [`components/PauseButton.jsx`](./components/PauseButton.jsx) | ปุ่ม Pause & Skip | Dropdown เวลาพัก (preset: 1h–7d + custom), ปุ่ม "หยุดคิดก่อน", และปุ่ม "ข้ามไปเลย" |
-| [`lib/schemas/checkout.js`](./lib/schemas/checkout.js) | Zod Validation Schema | กำหนด validation 4 ช่อง: ชื่อ-นามสกุล, ที่อยู่, เบอร์โทร, ช่องทางชำระเงิน |
-| [`components/CheckoutForm.jsx`](./components/CheckoutForm.jsx) | ฟอร์ม Checkout | `react-hook-form` + `zodResolver`, แสดง error สีแดงใต้ช่อง, ปุ่มยืนยันพร้อมสถานะ Loading |
-| [`app/products/[id]/page.jsx`](./app/products/[id]/page.jsx) | หน้ารายละเอียดสินค้า | Server Component ดึงข้อมูลสินค้าตาม id (ถ้าไม่พบเรียก `notFound()`) + วาง `<PauseButton />` |
-| [`app/ready/page.jsx`](./app/ready/page.jsx) | หน้าพร้อมตัดสินใจ | ดึง `readyItems`, ปุ่ม "ซื้อจริง" (เปิดฟอร์ม) และปุ่ม "เปลี่ยนใจ (ผ่าน)" |
-| [`app/actions.js`](./app/actions.js) | Server Actions | ฟังก์ชัน `confirmPurchaseAction` และ `passItemAction` บันทึกลง Supabase และสั่ง `revalidatePath` |
-| [`app/not-found.jsx`](./app/not-found.jsx) & [`app/error.jsx`](./app/error.jsx) | 404 & Error Boundary | หน้าแจ้งเตือนเมื่อไม่พบหน้า/สินค้า และกล่องดักจับ runtime error |
-
----
-
-## 🚀 ลำดับขั้นตอนการพัฒนา (Recommended Steps)
-
-1. **สัปดาห์ที่ 1 — ก่อตั้งฐานข้อมูลและระบบตะกร้า:**
-   - **กิต:** สร้างโปรเจกต์ Supabase, รัน `schema.sql`, รัน `scripts/seed.js`
-   - **โฟ:** เขียน logic ใน `PauseCartContext.jsx` และทดสอบ sync กับ localStorage
-   - **พี:** วางโครงสร้าง `layout.jsx`, `Nav.jsx`, 404 page
-
-2. **สัปดาห์ที่ 2 — หน้ารายการและระบบนับเวลา:**
-   - **กิต:** เชื่อมต่อ `lib/products.js`, สร้าง `ProductCard.jsx`, ทำหน้า `/` และ `/products`
-   - **พี:** ทำหน้า `/products/[id]` และคอมโพเนนต์ `PauseButton.jsx`
-   - **โฟ:** ทำหน้า `/cart` และคอมโพเนนต์ `Countdown.jsx`
-
-3. **สัปดาห์ที่ 3 — การตัดสินใจและแดชบอร์ดสถิติ:**
-   - **พี:** ทำหน้า `/ready`, `CheckoutForm.jsx` และเชื่อมต่อกับ `app/actions.js`
-   - **โฟ:** ทำหน้า `/history` ดึงสถิติจาก `DecisionLog` และวาดกราฟ `HistoryChart.jsx`
-   - **ร่วมกัน:** ทดสอบกระบวนการทั้งหมดตั้งแต่เริ่ม Pause จนถึงตัดสินใจ และทดสอบโหมดพรีเซนต์ (Dev Fast-forward)
+| [`app/layout.jsx`](./app/layout.jsx) & [`components/Nav.jsx`](./components/Nav.jsx) | Layout & Navbar | จัด Navbar sticky 56px, backdrop-blur, ลิงก์ 5 หน้า, และ `<CartBadge />` |
+| [`components/CartBadge.jsx`](./components/CartBadge.jsx) | Badge ตัวเลขตะกร้า | แสดงจำนวนสินค้าในตะกร้าพัก (ซ่อนถ้าเป็น 0) |
+| [`components/PauseButton.jsx`](./components/PauseButton.jsx) | ปุ่ม Pause & Skip | ตัวเลือกเวลานับถอยหลัง (1h–7d, custom) + ปุ่ม "หยุดคิดก่อน" และปุ่ม "ข้ามเวลา" |
+| [`lib/schemas/checkout.js`](./lib/schemas/checkout.js) | Zod Schema | กฎ validation สำหรับ 4 ช่องกรอกฟอร์ม |
+| [`components/CheckoutForm.jsx`](./components/CheckoutForm.jsx) | ฟอร์ม Checkout | จัดการฟอร์มด้วย `react-hook-form` + `zodResolver` |
+| [`app/products/[id]/page.jsx`](./app/products/[id]/page.jsx) | หน้ารายละเอียดสินค้า | Server Component ดึงสินค้าตาม id + วาง `<PauseButton />` |
+| [`app/ready/page.jsx`](./app/ready/page.jsx) | หน้าพร้อมตัดสินใจ | รายการสินค้าที่ครบเวลา พร้อมปุ่ม "ซื้อจริง" (เปิดฟอร์ม) และปุ่ม "เปลี่ยนใจ (ผ่าน)" |
+| [`app/actions.js`](./app/actions.js) | Server Actions | ฟังก์ชัน `confirmPurchaseAction` และ `passItemAction` บันทึกลง Supabase `DecisionLog` |
+| [`app/not-found.jsx`](./app/not-found.jsx) & [`app/error.jsx`](./app/error.jsx) | 404 & Error Boundary | หน้า 404 ไม่พบหน้า/สินค้า และหน้าดักจับ Error |

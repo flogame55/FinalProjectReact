@@ -1,15 +1,15 @@
 // ============================================================================
-// 👤 กิต — scripts/seed.js
+// 👤 โฟ — scripts/seed.js (งาน Seeding ข้อมูลสินค้าขึ้น Supabase)
 // ============================================================================
-// หน้าที่: สคริปต์สำหรับนำเข้าข้อมูลสินค้าเริ่มต้นและอัปโหลดรูปลง Supabase
+// หน้าที่: สคริปต์สำหรับนำเข้าข้อมูลสินค้าเริ่มต้นและอัปโหลดรูปภาพลง Supabase
 // วิธีรัน: node scripts/seed.js
 //
-// 📋 TODO สำหรับกิต:
+// 📋 TODO สำหรับโฟ:
 // 1. [ ] สร้าง Supabase Project และคัดลอก URL + Keys มาใส่ใน .env.local
 // 2. [ ] รันคำสั่ง SQL ใน `supabase/schema.sql` บน Supabase SQL Editor
 // 3. [ ] สร้าง Bucket 'product-images' ใน Supabase Storage และตั้งค่าเป็น Public
-// 4. [ ] ใส่ข้อมูลสินค้าสมจริง (อย่างน้อย 6-10 ชิ้น) และอัปโหลดรูปลง bucket เพื่อเก็บ public URL
-// 5. [ ] รัน script นี้เพื่อ insert ข้อมูลลงตาราง 'Product'
+// 4. [ ] เพิ่มรายการสินค้าตัวอย่างใน SAMPLE_PRODUCTS ให้หลากหลาย
+// 5. [ ] รันสคริปต์: `node scripts/seed.js` เพื่อ insert ข้อมูลลงตาราง 'Product'
 // ============================================================================
 
 import { createClient } from '@supabase/supabase-js'
@@ -21,14 +21,14 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseServiceKey) {
-  console.error('⚠️ [กิต] กรุณาระบุ NEXT_PUBLIC_SUPABASE_URL และ SUPABASE_SERVICE_ROLE_KEY ใน .env.local ก่อนรัน seed')
+  console.error('⚠️ [โฟ] กรุณาระบุ NEXT_PUBLIC_SUPABASE_URL และ SUPABASE_SERVICE_ROLE_KEY ใน .env.local ก่อนรัน seed')
   process.exit(1)
 }
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-// TODO (กิต): เตรียมข้อมูลสินค้าตัวอย่างเพิ่มเติมให้ครบถ้วน
-const SAMPLE_PRODUCTS = [
+// TODO (โฟ): เพิ่มรายการสินค้าตัวอย่างให้ครบตามความต้องการ
+export const SAMPLE_PRODUCTS = [
   {
     name: 'หูฟังไร้สายตัดเสียงรบกวน Noise Cancelling',
     price: 4990,
@@ -61,12 +61,13 @@ const SAMPLE_PRODUCTS = [
 
 async function seed() {
   console.log('🌱 กำลังเริ่มต้น Seed ข้อมูลสินค้าลง Supabase...')
+  // TODO (โฟ): เขียนคำสั่ง insert ข้อมูลลงตาราง 'Product'
   const { data, error } = await supabase.from('Product').insert(SAMPLE_PRODUCTS).select()
 
   if (error) {
     console.error('❌ เกิดข้อผิดพลาดในการ seed:', error.message)
   } else {
-    console.log(`✅ สำเร็จ! เพิ่มสินค้าแล้ว ${data.length} รายการ`)
+    console.log(`✅ สำเร็จ! เพิ่มสินค้าแล้ว ${data?.length || 0} รายการ`)
   }
 }
 

@@ -1,32 +1,37 @@
 'use client'
 
 // ============================================================================
-// 👤 โฟ — components/Countdown.jsx
+// 👤 กิต — components/Countdown.jsx
 // ============================================================================
 // หน้าที่: แสดงตัวนับเวลาถอยหลังแบบ Real-time ของแต่ละชิ้นในหน้า /cart
 //
-// 📋 TODO สำหรับโฟ:
-// 1. [ ] คำนวณเวลาที่เหลือ: diff = readyAt - Date.now()
-// 2. [ ] ใช้ `useEffect` + `setInterval` (1000ms) อัปเดตเวลาทุกวินาที และ cleanup ด้วย `clearInterval`
-// 3. [ ] แปลง diff เป็น ชั่วโมง : นาที : วินาที
-// 4. [ ] หากเปิดโหมด `isFastForward`: เร่งเวลานับถอยหลังสำหรับการนำเสนอ
-// 5. [ ] เมื่อเวลาหมด (diff <= 0): แสดงข้อความสถานะว่าครบเวลาแล้ว
-// 6. [ ] ปุ่ม "ข้ามเวลารอ" (Skip): เรียกฟังก์ชัน `onSkip`
+// 📋 TODO สำหรับกิต:
+// 1. [ ] คำนวณเวลาที่เหลือ: `const diff = readyAt - Date.now()`
+// 2. [ ] ใช้ `useEffect` + `setInterval` (1000ms) อัปเดตเวลาทุก 1 วินาที และอย่าลืม cleanup `clearInterval`
+// 3. [ ] คำนวณแปลงเวลาเป็น วัน, ชั่วโมง, นาที, วินาที:
+//        - `const seconds = Math.floor((timeLeft / 1000) % 60)`
+//        - `const minutes = Math.floor((timeLeft / (1000 * 60)) % 60)`
+//        - `const hours = Math.floor((timeLeft / (1000 * 60 * 60)) % 24)`
+// 4. [ ] รองรับโหมด `isFastForward`: ถ้าเปิด ให้เวลานับเร็วขึ้นสำหรับการ Demo
+// 5. [ ] เมื่อหมดเวลา (`diff <= 0`): แสดงข้อความหรือป้าย Badge ว่า "ครบกำหนดเวลาแล้ว! พร้อมตัดสินใจ"
+// 6. [ ] ปุ่ม "ข้ามเวลารอ": เรียกฟังก์ชัน `onSkip`
 // 7. [ ] ออกแบบตาม genesis-DESIGN.md:
-//        - Typography ตัวเลข: ฟอนต์ JetBrains Mono (`font-mono`)
-//        - Badge: `rounded-full`, สี Indigo/Neutral
+//        - ตัวเลขนับถอยหลัง: ฟอนต์ `JetBrains Mono` (`font-mono text-xs font-bold text-[#0A0A0A]`)
+//        - กล่องครอบตัวเลข: `bg-slate-100 px-2.5 py-1 rounded-[6px]`
 // ============================================================================
 
 import { useState, useEffect } from 'react'
 
 export default function Countdown({ readyAt, onSkip, isFastForward }) {
-  // TODO (โฟ): ประกาศ state เก็บเวลาที่เหลือ (timeLeft)
-
-  // TODO (โฟ): เขียน useEffect + setInterval สำหรับนับถอยหลังทุก 1 วินาที
+  // TODO (กิต): จัดการ state timeLeft และ useEffect สำรับ setInterval
 
   return (
     <div className="flex items-center justify-between gap-3">
-      {/* TODO (โฟ): แสดงเวลานับถอยหลังแบบ font-mono (ชม:นาที:วินาที) */}
+      {/* 
+        TODO (กิต): 
+        1. แสดงตัวเลขนับถอยหลังแบบ font-mono (ชม:นาที:วินาที)
+        2. ปุ่ม "ข้ามเวลารอ →" เรียก onSkip
+      */}
       <div className="flex items-center gap-2">
         <span className="text-xs text-[#6B6B6B]">เหลือเวลาคิด:</span>
         <span className="font-mono text-xs font-bold text-[#0A0A0A] bg-slate-100 px-2 py-1 rounded-[6px]">
@@ -34,7 +39,6 @@ export default function Countdown({ readyAt, onSkip, isFastForward }) {
         </span>
       </div>
 
-      {/* TODO (โฟ): ปุ่มข้ามเวลารอ */}
       <button
         onClick={onSkip}
         className="text-xs text-[#EF4444] hover:underline"

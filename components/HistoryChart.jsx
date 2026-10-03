@@ -1,43 +1,37 @@
 'use client'
 
 // ============================================================================
-// 👤 โฟ — components/HistoryChart.jsx
+// 👤 กิต — components/HistoryChart.jsx
 // ============================================================================
 // หน้าที่: แสดงผลกราฟสถิติการตัดสินใจด้วย Recharts (Client Component)
 //
-// 📋 TODO สำหรับโฟ:
-// 1. [ ] นำ Recharts มาเรนเดอร์กราฟ (BarChart, PieChart หรือ Bar)
-// 2. [ ] แสดงผลเปรียบเทียบสัดส่วน 3 กลุ่ม:
-//        - ซื้อจริง (Bought) -> สี Success #10B981
-//        - เปลี่ยนใจไม่ซื้อ (Passed) -> สี Indigo #6366F1
-//        - ข้ามเวลา (Skipped) -> สี Red #EF4444
-// 3. [ ] รองรับ ResponsiveContainer และ Empty State เมื่อยังไม่มีข้อมูล
-// 4. [ ] ออกแบบตาม genesis-DESIGN.md
+// 📋 TODO สำหรับกิต:
+// 1. [ ] รับ props: `{ data = [] }` โดย data เป็น array ของ `{ name: string, count: number }`
+// 2. [ ] จัดการ Empty State: หากไม่มีข้อมูล ให้แสดงกล่อง `rounded-[12px] border border-dashed border-[#E8E8EC] p-6 text-center`
+// 3. [ ] นำ Recharts มาเรนเดอร์:
+//        - ครอบด้วย `<ResponsiveContainer width="100%" height={260}>`
+//        - วาง `<BarChart data={data}>`
+//        - วาง `<XAxis dataKey="name" />`, `<YAxis allowDecimals={false} />`, `<Tooltip />`
+//        - วาง `<Bar dataKey="count" radius={[6, 6, 0, 0]}>`
+// 4. [ ] ใช้โทนสีตาม genesis-DESIGN.md:
+//        - ซื้อจริง (Bought) -> `#10B981` (Success Green)
+//        - เปลี่ยนใจ (Passed) -> `#6366F1` (Primary Indigo)
+//        - ข้ามไปเลย (Skipped) -> `#EF4444` (Error Red)
 // ============================================================================
 
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts'
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts'
 
 export default function HistoryChart({ data = [] }) {
-  // TODO (โฟ): จัดการ Empty State ถ้าไม่มีข้อมูล
-  if (!data || data.length === 0) {
-    return (
-      <div className="flex h-60 items-center justify-center rounded-[12px] border border-dashed border-[#E8E8EC] p-6 text-sm text-[#6B6B6B]">
-        ยังไม่มีข้อมูลสถิติเพียงพอสำหรับสร้างกราฟ
-      </div>
-    )
-  }
+  // TODO (กิต): ตรวจสอบ Empty State ถ้าข้อมูลว่างเปล่า
 
-  // TODO (โฟ): เขียนกราฟด้วย Recharts ตาม genesis-DESIGN.md
+  // TODO (กิต): กำหนดชุดสีตามสถานะการตัดสินใจ
+
   return (
     <div className="h-64 w-full">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data}>
-          <XAxis dataKey="name" />
-          <YAxis allowDecimals={false} />
-          <Tooltip />
-          <Bar dataKey="count" fill="#6366F1" radius={[6, 6, 0, 0]} />
-        </BarChart>
-      </ResponsiveContainer>
+      {/* 
+        TODO (กิต): เขียนกราฟแท่งด้วย Recharts ตามคำแนะนำด้านบน 
+      */}
+      <p className="text-xs text-[#6B6B6B]">TODO: แสดงผลกราฟสถิติ Recharts</p>
     </div>
   )
 }

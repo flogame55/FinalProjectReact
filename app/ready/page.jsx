@@ -7,27 +7,34 @@
 //
 // 📋 TODO สำหรับพี:
 // 1. [ ] ดึง `readyItems` และ `removeItem` จาก `usePauseCart()`
-// 2. [ ] จัดการ Empty State เมื่อไม่มีสินค้าพร้อมตัดสินใจ
-// 3. [ ] สำหรับสินค้าแต่ละชิ้น มี 2 ทางเลือก:
-//        - "ซื้อจริง": เปิดฟอร์ม `<CheckoutForm />` กรอกข้อมูล แล้วเรียก action บันทึกผลสำเร็จ
-//        - "เปลี่ยนใจ (ผ่าน)": ตัดสินค้าออกจากตะกร้า และเรียก action บันทึกผลว่าตัดสินใจไม่ซื้อ (ประหยัดเงิน)
-// 4. [ ] แสดงผล Badge แจ้งเตือนหากสินค้านั้นมาจากการกดข้ามเวลา (`item.skipped`)
-// 5. [ ] ออกแบบ UI ตาม genesis-DESIGN.md:
-//        - การ์ดครอบ: surface #FFFFFF, border 1px #E8E8EC, radius 12px
-//        - ปุ่มซื้อ: Success Green (#10B981) hover (#059669), radius 6px
-//        - ปุ่มผ่าน: Secondary Border Button, radius 6px
+// 2. [ ] จัดการ Empty State: หากไม่มีสินค้าที่พร้อมตัดสินใจ ให้แสดงข้อความและปุ่มกลับไปเลือกสินค้า
+// 3. [ ] สเตทสำหรับเลือกสินค้าเพื่อเปิดฟอร์ม Checkout:
+//        `const [selectedForCheckout, setSelectedForCheckout] = useState(null)`
+// 4. [ ] ฟังก์ชัน handleConfirmPurchase(formData):
+//        - เรียก `confirmPurchaseAction({ productId, price, skipped, form: formData })`
+//        - ลบสินค้าออกจากตะกร้าพัก: `removeItem(productId)`
+//        - ปิดฟอร์ม checkout
+// 5. [ ] ฟังก์ชัน handlePass(item):
+//        - เรียก `passItemAction({ productId, price, skipped })`
+//        - ลบสินค้าออกจากตะกร้าพัก: `removeItem(productId)`
+// 6. [ ] ออกแบบ UI ตามมาตรฐาน genesis-DESIGN.md:
+//        - การ์ดครอบ: `rounded-[12px] border border-[#E8E8EC] bg-white p-5`
+//        - ปุ่มซื้อจริง: `rounded-[6px] bg-[#10B981] hover:bg-[#059669] text-white px-4 py-2 text-xs font-medium`
+//        - ปุ่มผ่าน: `rounded-[6px] border border-[#E8E8EC] hover:bg-slate-50 text-[#0A0A0A] px-4 py-2 text-xs font-medium`
 // ============================================================================
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { usePauseCart } from '@/context/PauseCartContext'
 import CheckoutForm from '@/components/CheckoutForm'
-import Link from 'next/link'
+import { confirmPurchaseAction, passItemAction } from '@/app/actions'
+import { FALLBACK_PRODUCTS } from '@/lib/products'
 
 export default function ReadyPage() {
   const { readyItems = [], removeItem } = usePauseCart() || {}
   const [selectedForCheckout, setSelectedForCheckout] = useState(null)
 
-  // TODO (พี): เขียนฟังก์ชันจัดการการตัดสินใจซื้อจริง และฟังก์ชันเปลี่ยนใจ (ผ่าน)
+  // TODO (พี): เขียนฟังก์ชัน handlePass และ handleConfirmPurchase
 
   return (
     <div className="space-y-6">
@@ -36,57 +43,22 @@ export default function ReadyPage() {
           รายการพร้อมตัดสินใจ (Decision Gate)
         </h1>
         <p className="text-xs text-[#6B6B6B]">
-          สินค้าที่พ้นระยะเวลาคิดแล้ว คุณยังอยากได้อยู่จริงไหม?
+          สินค้าเหล่านี้ผ่านระยะเวลาคิดแล้ว คุณยังอยากได้อยู่จริงไหม?
         </p>
       </div>
 
-      {/* TODO (พี): แสดง Empty State ถ้าไม่มี readyItems */}
-      {readyItems.length === 0 ? (
-        <div className="rounded-[12px] border border-dashed border-[#E8E8EC] p-8 text-center">
-          <p className="text-sm text-[#6B6B6B]">ยังไม่มีสินค้าที่ครบกำหนดตัดสินใจ</p>
-          <div className="mt-4">
-            <Link href="/products" className="text-xs text-[#6366F1] underline">
-              ไปเลือกสินค้าเพิ่ม
-            </Link>
-          </div>
-        </div>
-      ) : (
-        /* TODO (พี): วนลูป render รายการสินค้าที่พร้อมตัดสินใจ หรือแสดง CheckoutForm */
-        <div className="space-y-4">
-          {readyItems.map((item) => (
-            <div
-              key={item.productId}
-              className="rounded-[12px] border border-[#E8E8EC] bg-white p-4 flex justify-between items-center"
-            >
-              <div>
-                <p className="font-semibold text-sm text-[#0A0A0A]">
-                  รหัสสินค้า #{item.productId}
-                </p>
-                {item.skipped && (
-                  <span className="text-[10px] text-[#EF4444] font-medium">
-                    (ข้ามเวลารอมา)
-                  </span>
-                )}
-              </div>
-              <div className="flex gap-2">
-                {/* TODO (พี): ปุ่มซื้อจริง และ ปุ่มผ่าน */}
-                <button
-                  onClick={() => setSelectedForCheckout(item)}
-                  className="rounded-[6px] bg-[#10B981] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#059669] transition"
-                >
-                  ซื้อจริง
-                </button>
-                <button
-                  onClick={() => removeItem && removeItem(item.productId)}
-                  className="rounded-[6px] border border-[#E8E8EC] px-3 py-1.5 text-xs font-medium text-[#0A0A0A] hover:bg-slate-50 transition"
-                >
-                  ผ่าน (ไม่ซื้อ)
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      {/* 
+        TODO (พี): แสดงเนื้อหาตามเงื่อนไข
+        1. ถ้ากำลังเลือกสินค้าเพื่อซื้อจริง (selectedForCheckout !== null):
+           ให้แสดงคอมโพเนนต์ <CheckoutForm item={selectedForCheckout} onConfirm={...} onCancel={...} />
+        2. ถ้าไม่มีสินค้าพร้อมตัดสินใจ (readyItems.length === 0):
+           ให้แสดง Empty State
+        3. ถ้ามีสินค้า:
+           ให้ map แสดงการ์ดสินค้าพร้อมปุ่ม "ซื้อจริง" และปุ่ม "ผ่าน (ไม่ซื้อ)"
+      */}
+      <div className="rounded-[12px] border border-[#E8E8EC] bg-white p-6">
+        {/* เขียนเงื่อนไขแสดงผลตาม TODO ด้านบน */}
+      </div>
     </div>
   )
 }

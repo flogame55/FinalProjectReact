@@ -5,14 +5,15 @@
 //
 // 📋 TODO สำหรับกิต:
 // 1. [ ] รับ props: `{ product: { id, name, price, category, imageUrl, description } }`
-// 2. [ ] แสดงรูปสินค้า (aspect-video หรือ aspect-square, มี overflow-hidden)
-// 3. [ ] แสดงชื่อสินค้า, ราคา (฿), หมวดหมู่สินค้า, คำอธิบายย่อ
-// 4. [ ] ปุ่ม "ดูรายละเอียด": ลิงก์ Next.js ไปที่ `/products/${id}`
-// 5. [ ] ปรับแต่ง UI ตามมาตรฐาน genesis-DESIGN.md:
-//        - Cards: surface #FFFFFF, border 1px #E8E8EC, radius 12px (`rounded-[12px]`)
-//        - Card Hover: ลอยขึ้น -2px (`hover:-translate-y-0.5`), เงา (`hover:shadow-md`)
-//        - Tag หมวดหมู่: radius 9999px (`rounded-full`), ฟอนต์เล็กกระชับ
-//        - ปุ่ม: radius 6px (`rounded-[6px]`), สี Indigo (#6366F1) hover (#4F46E5)
+// 2. [ ] ออกแบบการ์ดสินค้าตามมาตรฐาน genesis-DESIGN.md:
+//        - กรอบการ์ด: `rounded-[12px] border border-[#E8E8EC] bg-white p-4`
+//        - Interactive Hover: ลอยขึ้น -2px และมีเงา (`hover:-translate-y-0.5 hover:shadow-md transition duration-200`)
+//        - รูปสินค้า: `aspect-video w-full rounded-[8px] object-cover bg-slate-100`
+//        - Tag หมวดหมู่: `rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] text-[#6B6B6B]`
+//        - ชื่อสินค้า: `font-semibold text-sm text-[#0A0A0A] line-clamp-1`
+//        - ราคา: `font-bold text-sm text-[#0A0A0A]` (แสดงเครื่องหมาย ฿)
+//        - ปุ่ม "ดูรายละเอียด": `Link` ไปที่ `/products/${id}` สไตล์ Primary:
+//          `rounded-[6px] bg-[#6366F1] hover:bg-[#4F46E5] text-white px-3.5 py-1.5 text-xs font-medium`
 // ============================================================================
 
 import Link from 'next/link'
@@ -20,33 +21,18 @@ import Link from 'next/link'
 export default function ProductCard({ product }) {
   const { id, name, price, category, imageUrl, description } = product || {}
 
-  // TODO (กิต): ออกแบบและตกแต่งการ์ดสินค้าตาม genesis-DESIGN.md
   return (
-    <div className="group rounded-[12px] border border-[#E8E8EC] bg-white p-4 transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
-      {/* TODO (กิต): แสดงรูปสินค้า */}
-      <div className="aspect-video w-full overflow-hidden rounded-[8px] bg-slate-100 mb-3">
-        {imageUrl ? (
-          <img src={imageUrl} alt={name} className="h-full w-full object-cover" />
-        ) : (
-          <div className="h-full w-full flex items-center justify-center text-xs text-[#6B6B6B]">ไม่มีรูปภาพ</div>
-        )}
-      </div>
-
-      {/* TODO (กิต): แสดงชื่อ, ราคา, หมวดหมู่ และปุ่มไปหน้ารายละเอียด */}
-      <div className="space-y-1">
-        <span className="text-[10px] uppercase font-semibold text-[#6B6B6B]">{category}</span>
-        <h3 className="font-semibold text-sm text-[#0A0A0A] line-clamp-1">{name}</h3>
-        <p className="text-xs text-[#6B6B6B] line-clamp-2">{description}</p>
-        <div className="pt-2 flex items-center justify-between border-t border-[#E8E8EC] mt-3">
-          <span className="font-bold text-sm text-[#0A0A0A]">฿{price?.toLocaleString()}</span>
-          <Link
-            href={`/products/${id}`}
-            className="rounded-[6px] bg-[#6366F1] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#4F46E5] transition"
-          >
-            ดูรายละเอียด
-          </Link>
-        </div>
-      </div>
+    <div className="rounded-[12px] border border-[#E8E8EC] bg-white p-4">
+      {/* 
+        TODO (กิต): ออกแบบและวาง Layout การ์ดสินค้าตาม genesis-DESIGN.md
+        - ส่วนรูปสินค้า
+        - ส่วนป้ายหมวดหมู่และชื่อสินค้า
+        - ส่วนราคาและปุ่ม Link ไป /products/${id}
+      */}
+      <p className="text-sm font-semibold text-[#0A0A0A]">{name || 'ชื่อสินค้า'}</p>
+      <Link href={`/products/${id}`} className="text-xs text-[#6366F1] underline">
+        ดูรายละเอียด →
+      </Link>
     </div>
   )
 }
