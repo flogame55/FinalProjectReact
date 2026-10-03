@@ -56,7 +56,7 @@ graph TD
 
 ```mermaid
 graph LR
-  subgraph โฟ ["👤 โฟ (Backend & Cart Core)"]
+  subgraph Pho ["👤 โฟ (Backend & Cart Core)"]
     F1["supabase/schema.sql"]
     F2["scripts/seed.js"]
     F3["lib/products.js"]
@@ -64,7 +64,7 @@ graph LR
     F5["app/cart/page.jsx"]
   end
 
-  subgraph กิต ["👤 กิต (Catalog & Insights)"]
+  subgraph Kit ["👤 กิต (Catalog & Insights)"]
     K1["components/ProductCard.jsx"]
     K2["components/SearchFilter.jsx"]
     K3["app/page.jsx"]
@@ -74,7 +74,7 @@ graph LR
     K7["app/history/page.jsx"]
   end
 
-  subgraph พี ["👤 พี (Navigation & Decision Flow)"]
+  subgraph Pee ["👤 พี (Navigation & Decision Flow)"]
     P1["app/layout.jsx & components/Nav.jsx"]
     P2["components/CartBadge.jsx"]
     P3["components/PauseButton.jsx"]
