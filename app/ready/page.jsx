@@ -6,16 +6,17 @@
 // หน้าที่: หน้ารายการพร้อมตัดสินใจ (Decision Gate) เมื่อสินค้าพ้นระยะพักหรือกดข้ามมา
 //
 // 📋 TODO สำหรับพี:
-// 1. [ ] ดึง `readyItems` และ `removeItem` จาก `usePauseCart()`
+// 1. [ ] ดึง `readyItems`, `removeItem` และ `sessionId` จาก `usePauseCart()`:
+//        `const { readyItems = [], removeItem, sessionId } = usePauseCart() || {}`
 // 2. [ ] จัดการ Empty State: หากไม่มีสินค้าที่พร้อมตัดสินใจ ให้แสดงข้อความและปุ่มกลับไปเลือกสินค้า
 // 3. [ ] สเตทสำหรับเลือกสินค้าเพื่อเปิดฟอร์ม Checkout:
 //        `const [selectedForCheckout, setSelectedForCheckout] = useState(null)`
 // 4. [ ] ฟังก์ชัน handleConfirmPurchase(formData):
-//        - เรียก `confirmPurchaseAction({ productId, price, skipped, form: formData })`
+//        - เรียก `confirmPurchaseAction({ sessionId, productId, price, skipped, form: formData })`
 //        - ลบสินค้าออกจากตะกร้าพัก: `removeItem(productId)`
 //        - ปิดฟอร์ม checkout
 // 5. [ ] ฟังก์ชัน handlePass(item):
-//        - เรียก `passItemAction({ productId, price, skipped })`
+//        - เรียก `passItemAction({ sessionId, productId, price, skipped })`
 //        - ลบสินค้าออกจากตะกร้าพัก: `removeItem(productId)`
 // 6. [ ] ออกแบบ UI ตามมาตรฐาน genesis-DESIGN.md:
 //        - การ์ดครอบ: `rounded-[12px] border border-[#E8E8EC] bg-white p-5`
@@ -31,10 +32,10 @@ import { confirmPurchaseAction, passItemAction } from '@/app/actions'
 import { FALLBACK_PRODUCTS } from '@/lib/products'
 
 export default function ReadyPage() {
-  const { readyItems = [], removeItem } = usePauseCart() || {}
+  const { readyItems = [], removeItem, sessionId } = usePauseCart() || {}
   const [selectedForCheckout, setSelectedForCheckout] = useState(null)
 
-  // TODO (พี): เขียนฟังก์ชัน handlePass และ handleConfirmPurchase
+  // TODO (พี): เขียนฟังก์ชัน handlePass และ handleConfirmPurchase (อย่าลืมส่ง sessionId ไปด้วย)
 
   return (
     <div className="space-y-6">

@@ -3,14 +3,21 @@
 // ============================================================================
 // 👤 โฟ — context/PauseCartContext.jsx
 // ============================================================================
-// หน้าที่: จัดการ Global State ของ "ตะกร้าพัก" (Cooling-off Cart) ซิงก์กับ localStorage
+// หน้าที่: จัดการ Global State ของ "ตะกร้าพัก" (Cooling-off Cart) ซิงก์กับ localStorage + จัดการ sessionId
 //
 // 📋 TODO สำหรับโฟ:
-// 1. [ ] สร้าง State:
+// 1. [ ] จัดการ State `sessionId` เพื่อแยกผู้ใช้แต่ละคน (ไม่ให้สถิติปนกันบน Vercel):
+//        - อ่านจาก localStorage ('pause-session-id')
+//        - ถ้ายังไม่มี ให้สร้างด้วย `crypto.randomUUID()` แล้วบันทึกลง localStorage
+//        - บันทึกลง Cookie ด้วย เพื่อให้ Server Component (หน้า /history) อ่านได้:
+//          `document.cookie = 'pause-session-id=' + sid + '; path=/; max-age=31536000; SameSite=Lax'`
+//
+// 2. [ ] สร้าง State สำหรับตะกร้าพัก:
 //        - `const [items, setItems] = useState([])`
 //        - `const [devFastForward, setDevFastForward] = useState(false)`
 //        (โครงสร้างไอเทม: `{ productId: number, addedAt: number, readyAt: number, skipped: boolean }`)
-// 2. [ ] ซิงก์กับ Browser `localStorage` (key: "pause-cart"):
+//
+// 3. [ ] ซิงก์กับ Browser `localStorage` (key: "pause-cart"):
 //        - โหลดครั้งแรกตอน mount:
 //          ```javascript
 //          useEffect(() => {
@@ -32,14 +39,14 @@
 //            }
 //          }, [items])
 //          ```
-// 3. [ ] ฟังก์ชัน `addItem(productId, durationHours)`:
+// 4. [ ] ฟังก์ชัน `addItem(productId, durationHours)`:
 //        - คำนวณ `readyAt = Date.now() + (durationHours * 3600 * 1000)`
 //        - เพิ่มเข้า items ถ้ายังไม่มีสินค้านี้
-// 4. [ ] ฟังก์ชัน `removeItem(productId)`:
+// 5. [ ] ฟังก์ชัน `removeItem(productId)`:
 //        - กรองไอเทมที่ไม่ตรงกับ productId ออก: `setItems(prev => prev.filter(...))`
-// 5. [ ] ฟังก์ชัน `skipItem(productId)`:
+// 6. [ ] ฟังก์ชัน `skipItem(productId)`:
 //        - ตั้งค่า `readyAt = Date.now()` และ `skipped = true`
-// 6. [ ] ตัวแปรคำนวณ `readyItems`:
+// 7. [ ] ตัวแปรคำนวณ `readyItems`:
 //        - `items.filter(it => it.skipped || (it.readyAt && it.readyAt <= Date.now()))`
 // ============================================================================
 
@@ -49,9 +56,10 @@ const STORAGE_KEY = 'pause-cart'
 const PauseCartContext = createContext(null)
 
 export function PauseCartProvider({ children }) {
-  // TODO (โฟ): สร้าง state items และ devFastForward
+  // TODO (โฟ): สร้าง state sessionId, items, devFastForward
+  const [sessionId, setSessionId] = useState('')
 
-  // TODO (โฟ): เขียน useEffect ซิงก์ข้อมูลเข้า-ออกจาก localStorage
+  // TODO (โฟ): เขียน useEffect สร้าง/อ่าน sessionId และซิงก์ข้อมูลเข้า-ออกจาก localStorage
 
   // TODO (โฟ): เขียนฟังก์ชัน addItem, removeItem, skipItem, has, readyItems
   const items = []
@@ -64,6 +72,7 @@ export function PauseCartProvider({ children }) {
   const setDevFastForward = () => {}
 
   const value = {
+    sessionId,
     items,
     readyItems,
     addItem,

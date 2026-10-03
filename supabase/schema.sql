@@ -7,7 +7,7 @@
 -- 3. [ ] ไปที่เมนู Storage -> สร้าง Bucket ชื่อ 'product-images' และตั้งค่าเป็น Public Bucket
 -- ============================================================================
 
--- 1. สร้างตาราง Product
+-- 1. สร้างตาราง Product สำหรับแคตตาล็อกสินค้า
 CREATE TABLE IF NOT EXISTS "Product" (
   "id" SERIAL PRIMARY KEY,
   "name" TEXT NOT NULL,
@@ -18,9 +18,10 @@ CREATE TABLE IF NOT EXISTS "Product" (
   "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 2. สร้างตาราง DecisionLog (เชื่อมโยง Foreign Key ไปยัง Product.id)
+-- 2. สร้างตาราง DecisionLog (เก็บประวัติการตัดสินใจแยกตาม sessionId ของแต่ละเครื่อง)
 CREATE TABLE IF NOT EXISTS "DecisionLog" (
   "id" SERIAL PRIMARY KEY,
+  "sessionId" TEXT NOT NULL, -- UUID ประจำเครื่อง/เบราว์เซอร์ เพื่อแยกสถิติของแต่ละคน
   "productId" INTEGER NOT NULL REFERENCES "Product"("id") ON DELETE CASCADE,
   "price" INTEGER NOT NULL,
   "decisionStatus" TEXT NOT NULL CHECK ("decisionStatus" IN ('BOUGHT', 'PASSED')),
@@ -28,7 +29,8 @@ CREATE TABLE IF NOT EXISTS "DecisionLog" (
   "timestamp" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 3. สร้าง Indexes สำหรับเพิ่มความเร็วในการ Query วิเคราะห์สถิติ
+-- 3. สร้าง Indexes สำหรับเพิ่มความเร็วในการ Query
+CREATE INDEX IF NOT EXISTS "idx_decision_session" ON "DecisionLog"("sessionId");
 CREATE INDEX IF NOT EXISTS "idx_decision_status" ON "DecisionLog"("decisionStatus");
 CREATE INDEX IF NOT EXISTS "idx_decision_timestamp" ON "DecisionLog"("timestamp");
 CREATE INDEX IF NOT EXISTS "idx_product_category" ON "Product"("category");

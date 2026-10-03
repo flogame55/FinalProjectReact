@@ -22,13 +22,20 @@ graph TD
   H --> I
 ```
 
-### การจัดเก็บข้อมูล (Data Storage Architecture):
-1. **Supabase PostgreSQL Database:**
+### การจัดเก็บข้อมูลและการแยกผู้ใช้บน Vercel (Data Isolation Architecture):
+1. **การแยกตะกร้าพัก (`/cart` และ `/ready`):**
+   - จัดเก็บใน Browser `localStorage` (key: `'pause-cart'`) แยกตามเครื่อง/เบราว์เซอร์ของผู้ใช้โดยอัตโนมัติ ไม่ปนกัน 100%
+2. **การแยกประวัติและสถิติ (`/history` และ `DecisionLog` ใน Supabase):**
+   - ใช้ระบบ **Anonymous `sessionId` (Client UUID)** เพื่อให้ผู้ใช้แต่ละคน (เช่น อาจารย์ หรือเพื่อนในกลุ่ม) เข้าชมเว็บที่ Deploy บน Vercel พร้อมกันแล้วเห็นเฉพาะสถิติของตัวเอง
+   - **อายุการใช้งานของ `sessionId` (Lifetime):**
+     - ใน `localStorage` ('pause-session-id'): **อยู่ได้ตลอดไป (Persistent)** จนกว่าจะกดล้างข้อมูลเบราว์เซอร์ (Clear Data)
+     - ใน `Cookie` ('pause-session-id'): **ตั้งอายุไว้ 1 ปี (`max-age=31536000`)** เพื่อให้ Server Components ของ Next.js (เช่น หน้า `/history`) สามารถอ่านได้โดยตรงทันที
+     - **โหมด Incognito / Private Window:** จะได้ `sessionId` ใหม่ชั่วคราว เหมาะแก่การทดสอบจำลองเป็นคนใหม่
+3. **Supabase PostgreSQL Database:**
    - **`Product`**: แคตตาล็อกสินค้า, ราคา, หมวดหมู่, คำอธิบาย, รูปภาพ
-   - **`DecisionLog`**: บันทึกประวัติการตัดสินใจ (`BOUGHT` หรือ `PASSED`), ราคา, flag `skipped`, วันเวลา
+   - **`DecisionLog`**: บันทึกประวัติการตัดสินใจ (`sessionId`, `productId`, `price`, `decisionStatus`, `skipped`, `timestamp`)
    - **Storage Bucket (`product-images`)**: จัดเก็บไฟล์รูปภาพสินค้าแบบ Public
-2. **Browser LocalStorage (`pause-cart`):**
-   - จัดเก็บสถานะตะกร้าพักและเวลานับถอยหลังของอุปกรณ์ผู้ใช้ (Client-side) เนื่องจากระบบไม่มีระบบ Login สมาชิก
+
 
 ---
 
