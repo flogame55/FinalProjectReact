@@ -9,9 +9,15 @@
 
 ---
 
+## 📌 เอกสารสำคัญสำหรับทีม
+- 📖 [**TEAM_GUIDE.md**](./TEAM_GUIDE.md) — แผนงานอย่างละเอียด, Checklist สิ่งที่แต่ละคนต้องทำ (TODO List), และข้อตกลงร่วม
+- 🎨 [**genesis-DESIGN.md**](./genesis-DESIGN.md) — มาตรฐานการออกแบบ UI ประจำโปรเจกต์ (โทนสี, ฟอนต์, ขอบมน, Do's & Don'ts)
+
+---
+
 ## 🛠️ Tech Stack
 - **Framework:** Next.js 15 (App Router) + React 19
-- **Styling:** Tailwind CSS v4
+- **Styling:** Tailwind CSS v4 + Genesis Design System tokens
 - **Database & Storage:** Supabase (PostgreSQL + Storage bucket `product-images`)
 - **Forms & Validation:** `react-hook-form` + `zod`
 - **Charts:** `recharts`
@@ -50,28 +56,28 @@
 
 ---
 
-## 👥 การแบ่งไฟล์และความรับผิดชอบ
+## 👥 โครงสร้างไฟล์และความรับผิดชอบ (ทุกคนมี TODO ในไฟล์ตัวเอง)
 
-### 👤 โฟ:
-- `context/PauseCartContext.jsx` — State ตะกร้าพัก + sync localStorage + countdown + skip + dev fast-forward
-- `components/Countdown.jsx` — ตัวนับเวลาถอยหลังแบบ Real-time
-- `components/HistoryChart.jsx` — กราฟสถิติด้วย Recharts
-- `app/cart/page.jsx` — หน้าตะกร้าพัก (Cooling-off Cart)
-- `app/history/page.jsx` — หน้าสถิติและประวัติการตัดสินใจ
+* **👤 โฟ:**
+  - `context/PauseCartContext.jsx`
+  - `components/Countdown.jsx`
+  - `components/HistoryChart.jsx`
+  - `app/cart/page.jsx`
+  - `app/history/page.jsx`
 
-### 👤 กิต:
-- `supabase/schema.sql` & `scripts/seed.js` — โครงสร้างตารางและสคริปต์ seed ข้อมูลสินค้า/รูป
-- `lib/products.js` — ฟังก์ชัน query สินค้าจาก Supabase (รองรับ search และ category)
-- `components/ProductCard.jsx` — การ์ดแสดงสินค้า
-- `components/SearchFilter.jsx` — ช่องค้นหาและตัวกรองหมวดหมู่ผ่าน URL Search Params
-- `app/page.jsx` — หน้าแรก (Landing & Showcase)
-- `app/products/page.jsx` — หน้ารายการสินค้าทั้งหมด
+* **👤 กิต:**
+  - `supabase/schema.sql` & `scripts/seed.js`
+  - `lib/products.js`
+  - `components/ProductCard.jsx`
+  - `components/SearchFilter.jsx`
+  - `app/page.jsx`
+  - `app/products/page.jsx`
 
-### 👤 พี:
-- `app/layout.jsx` & `components/Nav.jsx` & `components/CartBadge.jsx` — โครงสร้าง Layout และแถบนำทาง
-- `components/PauseButton.jsx` — ตัวเลือกเวลาพักคิด (preset + กำหนดเอง) + ปุ่มหยุดคิดก่อน / ข้ามไปเลย
-- `components/CheckoutForm.jsx` & `lib/schemas/checkout.js` — ฟอร์ม Checkout และ Zod Schema
-- `app/products/[id]/page.jsx` — หน้ารายละเอียดสินค้า
-- `app/ready/page.jsx` — หน้ารายการพร้อมตัดสินใจ (ซื้อจริง / ผ่าน)
-- `app/actions.js` — Server Actions บันทึกการตัดสินใจ (`confirmPurchaseAction` / `passItemAction`)
-- `app/not-found.jsx` & `app/error.jsx` — หน้า 404 และ Error Boundary
+* **👤 พี:**
+  - `app/layout.jsx`, `components/Nav.jsx`, `components/CartBadge.jsx`
+  - `components/PauseButton.jsx`
+  - `components/CheckoutForm.jsx` & `lib/schemas/checkout.js`
+  - `app/products/[id]/page.jsx`
+  - `app/ready/page.jsx`
+  - `app/actions.js`
+  - `app/not-found.jsx` & `app/error.jsx`

@@ -1,23 +1,38 @@
 'use client'
 
-// 👤 โฟ — Countdown (ตัวนับเวลาถอยหลังแบบ Real-time ของแต่ละชิ้นใน /cart + ปุ่มข้าม)
+// ============================================================================
+// 👤 โฟ — components/Countdown.jsx
+// ============================================================================
+// หน้าที่: แสดงตัวนับเวลาถอยหลังแบบ Real-time ของแต่ละชิ้นในหน้า /cart
+//
+// 📋 TODO สำหรับโฟ:
+// 1. [ ] คำนวณเวลาที่เหลือ: diff = readyAt - Date.now()
+// 2. [ ] ใช้ `useEffect` + `setInterval` (1000ms) อัปเดตเวลาทุกวินาที และอย่าลืม cleanup `clearInterval`
+// 3. [ ] แปลงเวลาเป็น วัน / ชั่วโมง / นาที / วินาที
+// 4. [ ] รองรับโหมด `isFastForward`: ถ้าเปิดโหมดนี้ ให้เวลานับเร็วขึ้นสำหรับการ Demo (เช่น 1 ชม. เหลือ 1 วิ)
+// 5. [ ] เมื่อเวลาหมด (diff <= 0): แสดง Badge สถานะ "ครบเวลาแล้ว พร้อมตัดสินใจ"
+// 6. [ ] ปุ่ม "ข้ามเวลารอ" (Skip): เรียก callback `onSkip` เพื่อย้ายสินค้าไปพร้อมตัดสินใจทันที
+// 7. [ ] ปรับ UI ตาม genesis-DESIGN.md:
+//        - Typography: ตัวเลขฟอนต์ JetBrains Mono (`font-mono`)
+//        - Badge: radius 9999px (rounded-full)
+// ============================================================================
+
 import { useState, useEffect } from 'react'
 
 export default function Countdown({ readyAt, onSkip, isFastForward }) {
   const [timeLeft, setTimeLeft] = useState(0)
 
   useEffect(() => {
+    // TODO (โฟ): เขียน timer คำนวณเวลานับถอยหลังจริง และจัดการ cleanup
     const calculateTime = () => {
-      const now = Date.now()
-      const diff = readyAt - now
+      const diff = readyAt - Date.now()
       setTimeLeft(diff > 0 ? diff : 0)
     }
 
     calculateTime()
-    const timer = setInterval(calculateTime, 1000)
-
-    return () => clearInterval(timer)
-  }, [readyAt])
+    const interval = setInterval(calculateTime, 1000)
+    return () => clearInterval(interval)
+  }, [readyAt, isFastForward])
 
   if (timeLeft <= 0) {
     return (
@@ -27,6 +42,7 @@ export default function Countdown({ readyAt, onSkip, isFastForward }) {
     )
   }
 
+  // TODO (โฟ): ปรับการคำนวณและแสดงผลตามที่ออกแบบไว้
   const seconds = Math.floor((timeLeft / 1000) % 60)
   const minutes = Math.floor((timeLeft / (1000 * 60)) % 60)
   const hours = Math.floor((timeLeft / (1000 * 60 * 60)) % 24)
@@ -35,8 +51,8 @@ export default function Countdown({ readyAt, onSkip, isFastForward }) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <div className="flex items-center gap-2">
-        <span className="text-xs font-semibold text-slate-500">เหลือเวลาคิด:</span>
-        <div className="flex gap-1 text-xs font-mono font-bold text-slate-900 bg-slate-100 px-2.5 py-1 rounded-lg">
+        <span className="text-xs font-medium text-[#6B6B6B]">เหลือเวลาคิด:</span>
+        <div className="flex gap-1 text-xs font-mono font-bold text-[#0A0A0A] bg-slate-100 px-2.5 py-1 rounded-[6px]">
           {days > 0 && <span>{days}d</span>}
           <span>{String(hours).padStart(2, '0')}h</span>
           <span>:</span>
@@ -48,7 +64,7 @@ export default function Countdown({ readyAt, onSkip, isFastForward }) {
 
       <button
         onClick={onSkip}
-        className="text-xs font-semibold text-rose-600 hover:text-rose-800 underline self-start sm:self-auto"
+        className="text-xs font-semibold text-rose-600 hover:text-rose-800 underline self-start sm:self-auto cursor-pointer"
       >
         ข้ามเวลารอ →
       </button>

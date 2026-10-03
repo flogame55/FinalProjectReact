@@ -1,5 +1,16 @@
-// 👤 กิต — scripts/seed.js (สคริปต์ใส่ข้อมูลสินค้าและรูปเริ่มต้นลง Supabase)
-// วิธีรัน: node scripts/seed.js (หลังจากกรอกค่าใน .env.local แล้ว)
+// ============================================================================
+// 👤 กิต — scripts/seed.js
+// ============================================================================
+// หน้าที่: สคริปต์สำหรับนำเข้าข้อมูลสินค้าเริ่มต้นและอัปโหลดรูปลง Supabase
+// วิธีรัน: node scripts/seed.js
+//
+// 📋 TODO สำหรับกิต:
+// 1. [ ] สร้าง Supabase Project และคัดลอก URL + Keys มาใส่ใน .env.local
+// 2. [ ] รันคำสั่ง SQL ใน `supabase/schema.sql` บน Supabase SQL Editor
+// 3. [ ] สร้าง Bucket 'product-images' ใน Supabase Storage และตั้งค่าเป็น Public
+// 4. [ ] ใส่ข้อมูลสินค้าสมจริง (อย่างน้อย 6-10 ชิ้น) และอัปโหลดรูปลง bucket เพื่อเก็บ public URL
+// 5. [ ] รัน script นี้เพื่อ insert ข้อมูลลงตาราง 'Product'
+// ============================================================================
 
 import { createClient } from '@supabase/supabase-js'
 import dotenv from 'dotenv'
@@ -10,12 +21,13 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseServiceKey) {
-  console.error('กรุณาระบุ NEXT_PUBLIC_SUPABASE_URL และ SUPABASE_SERVICE_ROLE_KEY ใน .env.local ก่อนรัน seed')
+  console.error('⚠️ [กิต] กรุณาระบุ NEXT_PUBLIC_SUPABASE_URL และ SUPABASE_SERVICE_ROLE_KEY ใน .env.local ก่อนรัน seed')
   process.exit(1)
 }
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+// TODO (กิต): เตรียมข้อมูลสินค้าตัวอย่างเพิ่มเติมให้ครบถ้วน
 const SAMPLE_PRODUCTS = [
   {
     name: 'หูฟังไร้สายตัดเสียงรบกวน Noise Cancelling',
@@ -48,7 +60,7 @@ const SAMPLE_PRODUCTS = [
 ]
 
 async function seed() {
-  console.log('🌱 กำลังเริ่มต้น Seed ข้อมูลสินค้า...')
+  console.log('🌱 กำลังเริ่มต้น Seed ข้อมูลสินค้าลง Supabase...')
   const { data, error } = await supabase.from('Product').insert(SAMPLE_PRODUCTS).select()
 
   if (error) {

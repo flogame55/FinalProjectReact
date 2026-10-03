@@ -1,27 +1,34 @@
 'use client'
 
-// 👤 โฟ — PauseCartContext (Global State ตะกร้าพัก + localStorage sync + countdown + skip + dev fast-forward)
-// Interface Contract:
-//   items: CartItem[] -> [{ productId: number, addedAt: number, readyAt: number, skipped: boolean }]
-//   addItem(productId: number, durationHours?: number)
-//   removeItem(productId: number)
-//   skipItem(productId: number) -> ตั้ง readyAt = now และ skipped = true ทันที
-//   has(productId: number) -> boolean
-//   readyItems: CartItem[] -> กรองเฉพาะที่ readyAt <= now
-//   count: number -> จำนวนสินค้าในตะกร้าพัก
-//   devFastForward: boolean, setDevFastForward(val: boolean)
+// ============================================================================
+// 👤 โฟ — context/PauseCartContext.jsx
+// ============================================================================
+// หน้าที่: จัดการ Global State ของ "ตะกร้าพัก" (Cooling-off Cart) เชื่อมต่อกับ localStorage
+//
+// 📋 TODO สำหรับโฟ:
+// 1. [ ] จัดการ state `items` เก็บรายการสินค้าในตะกร้าพัก
+//        โครงสร้างไอเทม: { productId: number, addedAt: number, readyAt: number, skipped: boolean }
+// 2. [ ] ซิงก์ข้อมูลกับ browser `localStorage` (key: "pause-cart") ทั้งตอนโหลดครั้งแรกและตอน state เปลี่ยน
+// 3. [ ] จัดการ Error กรณี localStorage เสียหาย (ห้ามหน้าจอขาว)
+// 4. [ ] ฟังก์ชัน `addItem(productId, durationHours)`:
+//        - คำนวณ readyAt = now + (durationHours * 3600 * 1000)
+//        - ป้องกันการเพิ่มสินค้าซ้ำ
+// 5. [ ] ฟังก์ชัน `removeItem(productId)`: ลบสินค้าออกจากตะกร้า
+// 6. [ ] ฟังก์ชัน `skipItem(productId)`: ตั้ง readyAt = now และ skipped = true ทันที
+// 7. [ ] คำนวณ `readyItems`: กรองเฉพาะไอเทมที่ readyAt <= now หรือ skipped === true (คำนวณตอน render)
+// 8. [ ] สวิตช์ `devFastForward`: สำหรับเร่งเวลานับถอยหลังในการนำเสนอ (เช่น 1 ชม. -> 1 วินาที)
+// ============================================================================
 
 import { createContext, useContext, useState, useEffect } from 'react'
 
 const STORAGE_KEY = 'pause-cart'
-
 const PauseCartContext = createContext(null)
 
 export function PauseCartProvider({ children }) {
+  // TODO (โฟ): ปรับปรุง state และ logic ตามข้อกำหนดด้านบน
   const [items, setItems] = useState([])
   const [devFastForward, setDevFastForward] = useState(false)
 
-  // อ่านจาก localStorage ตอน mount
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
@@ -30,51 +37,42 @@ export function PauseCartProvider({ children }) {
         if (Array.isArray(parsed)) setItems(parsed)
       }
     } catch (e) {
-      console.error('Failed to parse pause-cart from localStorage', e)
+      console.error('TODO (โฟ): จัดการ error กรณี parse localStorage ล้มเหลว', e)
     }
   }, [])
 
-  // บันทึกลง localStorage เมื่อ items เปลี่ยน
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
     } catch (e) {
-      console.error('Failed to save pause-cart to localStorage', e)
+      console.error('TODO (โฟ): บันทึกลง localStorage', e)
     }
   }, [items])
 
   const addItem = (productId, durationHours = 24) => {
+    // TODO (โฟ): คำนวณระยะเวลา และเพิ่มสินค้าเข้า items
     const now = Date.now()
     const durationMs = durationHours * 60 * 60 * 1000
     setItems((prev) => {
       if (prev.some((it) => it.productId === productId)) return prev
-      return [
-        ...prev,
-        {
-          productId,
-          addedAt: now,
-          readyAt: now + durationMs,
-          skipped: false,
-        },
-      ]
+      return [...prev, { productId, addedAt: now, readyAt: now + durationMs, skipped: false }]
     })
   }
 
   const removeItem = (productId) => {
+    // TODO (โฟ): นำ productId ออกจาก items
     setItems((prev) => prev.filter((it) => it.productId !== productId))
   }
 
   const skipItem = (productId) => {
+    // TODO (โฟ): ปรับ readyAt ให้เป็นปัจจุบัน และตั้ง skipped = true
     const now = Date.now()
     setItems((prev) =>
-      prev.map((it) =>
-        it.productId === productId ? { ...it, readyAt: now, skipped: true } : it
-      )
+      prev.map((it) => (it.productId === productId ? { ...it, readyAt: now, skipped: true } : it))
     )
   }
 
   const has = (productId) => items.some((it) => it.productId === productId)
-
   const count = items.length
   const now = Date.now()
   const readyItems = items.filter((it) => it.readyAt <= now || it.skipped)
