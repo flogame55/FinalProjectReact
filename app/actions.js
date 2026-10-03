@@ -7,14 +7,13 @@
 //
 // 📋 TODO สำหรับพีและโฟ:
 // 1. [ ] ฟังก์ชัน `confirmPurchaseAction({ productId, price, skipped, form })`:
-//        - บันทึกแถวใหม่ลงตาราง `DecisionLog` ใน Supabase
-//        - กำหนด decisionStatus = 'BOUGHT'
-//        - บันทึก boolean `skipped` (ข้ามเวลามาหรือไม่)
-//        - เรียก `revalidatePath('/history')` เพื่อให้หน้าสถิติอัปเดตทันที
+//        - เชื่อมต่อ Supabase ตาราง 'DecisionLog'
+//        - บันทึก record ด้วย decisionStatus = 'BOUGHT'
+//        - เก็บค่า skipped (true/false) เพื่อนำไปวิเคราะห์ผล
+//        - เรียก `revalidatePath('/history')` เพื่อรีเฟรชข้อมูลหน้าสถิติ
 // 2. [ ] ฟังก์ชัน `passItemAction({ productId, price, skipped })`:
-//        - บันทึกแถวใหม่ลงตาราง `DecisionLog` ใน Supabase
-//        - กำหนด decisionStatus = 'PASSED'
-//        - บันทึก boolean `skipped`
+//        - บันทึก record ด้วย decisionStatus = 'PASSED'
+//        - เก็บค่า skipped (true/false)
 //        - เรียก `revalidatePath('/history')`
 // ============================================================================
 
@@ -22,51 +21,23 @@ import { supabase } from '@/lib/supabase'
 import { revalidatePath } from 'next/cache'
 
 export async function confirmPurchaseAction({ productId, price, skipped = false, form = {} }) {
-  // TODO (พี + โฟ): เขียน Server Action ยืนยันการสั่งซื้อ
+  // TODO (พี + โฟ): เขียนคำสั่ง insert ลงตาราง DecisionLog ใน Supabase
   try {
-    const { data, error } = await supabase.from('DecisionLog').insert([
-      {
-        productId: Number(productId),
-        price: Number(price),
-        decisionStatus: 'BOUGHT',
-        skipped: Boolean(skipped),
-        timestamp: new Date().toISOString(),
-      },
-    ])
-
-    if (error) {
-      console.warn('TODO: จัดการ error บันทึก DecisionLog', error.message)
-    }
-
+    // โค้ดของพี + โฟ
     revalidatePath('/history')
     return { ok: true }
   } catch (err) {
-    console.error('confirmPurchaseAction error:', err)
     return { ok: false, error: err.message }
   }
 }
 
 export async function passItemAction({ productId, price, skipped = false }) {
-  // TODO (พี + โฟ): เขียน Server Action เมื่อผู้ใช้เปลี่ยนใจไม่ซื้อ
+  // TODO (พี + โฟ): เขียนคำสั่ง insert decisionStatus = 'PASSED'
   try {
-    const { data, error } = await supabase.from('DecisionLog').insert([
-      {
-        productId: Number(productId),
-        price: Number(price),
-        decisionStatus: 'PASSED',
-        skipped: Boolean(skipped),
-        timestamp: new Date().toISOString(),
-      },
-    ])
-
-    if (error) {
-      console.warn('TODO: จัดการ error บันทึก DecisionLog', error.message)
-    }
-
+    // โค้ดของพี + โฟ
     revalidatePath('/history')
     return { ok: true }
   } catch (err) {
-    console.error('passItemAction error:', err)
     return { ok: false, error: err.message }
   }
 }

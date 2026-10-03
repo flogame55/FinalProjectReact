@@ -4,14 +4,12 @@
 // หน้าที่: หน้ารายการสินค้าทั้งหมด พร้อมระบบค้นหาและตัวกรองหมวดหมู่
 //
 // 📋 TODO สำหรับกิต:
-// 1. [ ] รับ `searchParams` ({ q, category }) จาก URL ฝั่ง Server Component
-// 2. [ ] เรียก `getProducts({ q, category })` เพื่อดึงสินค้าที่ตรงกับเงื่อนไข
+// 1. [ ] รับ `searchParams` ({ q, category }) จาก URL
+// 2. [ ] เรียก `getProducts({ q, category })` เพื่อค้นหาสินค้า
 // 3. [ ] นำ `<SearchFilter />` มาวางด้านบน
-// 4. [ ] นำ `<ProductCard />` มา map แสดงผลใน Responsive Grid (1 col mobile, 2 tablet, 3 desktop)
-// 5. [ ] แสดง Empty State เมื่อไม่พบสินค้าที่ตรงกับการค้นหา
-// 6. [ ] ออกแบบ UI ตาม genesis-DESIGN.md:
-//        - Container max width 1280px (หรือ max-w-5xl)
-//        - Grid gap: 20px–24px (gap-6)
+// 4. [ ] นำ `<ProductCard />` มา map แสดงในตารางกริด (Responsive Grid)
+// 5. [ ] แสดง Empty State หากไม่พบสินค้าที่ตรงกับการค้นหา
+// 6. [ ] ออกแบบ UI ตาม genesis-DESIGN.md
 // ============================================================================
 
 import SearchFilter from '@/components/SearchFilter'
@@ -19,7 +17,7 @@ import ProductCard from '@/components/ProductCard'
 import { getProducts } from '@/lib/products'
 
 export default async function ProductsPage({ searchParams }) {
-  // TODO (กิต): อ่าน query params จาก URL
+  // TODO (กิต): อ่าน query params จาก URL (q, category)
   const resolvedParams = await searchParams
   const q = resolvedParams?.q || ''
   const category = resolvedParams?.category || ''
@@ -35,20 +33,16 @@ export default async function ProductsPage({ searchParams }) {
         </p>
       </div>
 
-      {/* แถบค้นหาและตัวกรอง */}
+      {/* TODO (กิต): วางคอมโพเนนต์ค้นหาและกรอง SearchFilter */}
       <SearchFilter />
 
-      {/* TODO (กิต): แสดงรายการสินค้า หรือ Empty State */}
+      {/* TODO (กิต): แสดง Grid ของ ProductCard หรือแสดง Empty State หากไม่พบสินค้า */}
       {products.length === 0 ? (
-        <div className="rounded-[12px] border border-dashed border-[#E8E8EC] bg-white p-12 text-center">
-          <p className="text-3xl">🔍</p>
-          <h3 className="mt-2 text-base font-bold text-[#0A0A0A]">ไม่พบสินค้า</h3>
-          <p className="mt-1 text-xs text-[#6B6B6B]">
-            ลองปรับเปลี่ยนคำค้นหาหรือเลือกหมวดหมู่อื่น
-          </p>
+        <div className="rounded-[12px] border border-dashed border-[#E8E8EC] p-8 text-center text-[#6B6B6B]">
+          ไม่พบสินค้าที่ค้นหา
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {products.map((p) => (
             <ProductCard key={p.id} product={p} />
           ))}

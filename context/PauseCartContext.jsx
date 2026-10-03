@@ -3,19 +3,21 @@
 // ============================================================================
 // 👤 โฟ — context/PauseCartContext.jsx
 // ============================================================================
-// หน้าที่: จัดการ Global State ของ "ตะกร้าพัก" (Cooling-off Cart) เชื่อมต่อกับ localStorage
+// หน้าที่: จัดการ Global State ของ "ตะกร้าพัก" (Cooling-off Cart) ซิงก์กับ localStorage
 //
 // 📋 TODO สำหรับโฟ:
 // 1. [ ] จัดการ state `items` เก็บรายการสินค้าในตะกร้าพัก
 //        โครงสร้างไอเทม: { productId: number, addedAt: number, readyAt: number, skipped: boolean }
-// 2. [ ] ซิงก์ข้อมูลกับ browser `localStorage` (key: "pause-cart") ทั้งตอนโหลดครั้งแรกและตอน state เปลี่ยน
-// 3. [ ] จัดการ Error กรณี localStorage เสียหาย (ห้ามหน้าจอขาว)
+// 2. [ ] ซิงก์ข้อมูลกับ browser `localStorage` (key: "pause-cart")
+//        - อ่านค่าเริ่มต้นจาก localStorage เมื่อคอมโพเนนต์ mount (useEffect)
+//        - บันทึกลง localStorage เมื่อ items มีการเปลี่ยนแปลง
+// 3. [ ] จัดการ try-catch ป้องกันแอปล่มกรณี localStorage เสียหาย
 // 4. [ ] ฟังก์ชัน `addItem(productId, durationHours)`:
 //        - คำนวณ readyAt = now + (durationHours * 3600 * 1000)
-//        - ป้องกันการเพิ่มสินค้าซ้ำ
+//        - ป้องกันการเพิ่มสินค้าเดิมซ้ำ
 // 5. [ ] ฟังก์ชัน `removeItem(productId)`: ลบสินค้าออกจากตะกร้า
 // 6. [ ] ฟังก์ชัน `skipItem(productId)`: ตั้ง readyAt = now และ skipped = true ทันที
-// 7. [ ] คำนวณ `readyItems`: กรองเฉพาะไอเทมที่ readyAt <= now หรือ skipped === true (คำนวณตอน render)
+// 7. [ ] คำนวณ `readyItems`: กรองเฉพาะไอเทมที่ readyAt <= now หรือ skipped === true
 // 8. [ ] สวิตช์ `devFastForward`: สำหรับเร่งเวลานับถอยหลังในการนำเสนอ (เช่น 1 ชม. -> 1 วินาที)
 // ============================================================================
 
@@ -25,81 +27,55 @@ const STORAGE_KEY = 'pause-cart'
 const PauseCartContext = createContext(null)
 
 export function PauseCartProvider({ children }) {
-  // TODO (โฟ): ปรับปรุง state และ logic ตามข้อกำหนดด้านบน
+  // TODO (โฟ): สร้าง state items และ devFastForward
   const [items, setItems] = useState([])
   const [devFastForward, setDevFastForward] = useState(false)
 
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      if (stored) {
-        const parsed = JSON.parse(stored)
-        if (Array.isArray(parsed)) setItems(parsed)
-      }
-    } catch (e) {
-      console.error('TODO (โฟ): จัดการ error กรณี parse localStorage ล้มเหลว', e)
-    }
-  }, [])
+  // TODO (โฟ): เขียน useEffect ซิงก์ข้อมูลเข้า-ออกจาก localStorage
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
-    } catch (e) {
-      console.error('TODO (โฟ): บันทึกลง localStorage', e)
-    }
-  }, [items])
-
+  // TODO (โฟ): เขียนฟังก์ชัน addItem(productId, durationHours)
   const addItem = (productId, durationHours = 24) => {
-    // TODO (โฟ): คำนวณระยะเวลา และเพิ่มสินค้าเข้า items
-    const now = Date.now()
-    const durationMs = durationHours * 60 * 60 * 1000
-    setItems((prev) => {
-      if (prev.some((it) => it.productId === productId)) return prev
-      return [...prev, { productId, addedAt: now, readyAt: now + durationMs, skipped: false }]
-    })
+    // โค้ดของโฟ
   }
 
+  // TODO (โฟ): เขียนฟังก์ชัน removeItem(productId)
   const removeItem = (productId) => {
-    // TODO (โฟ): นำ productId ออกจาก items
-    setItems((prev) => prev.filter((it) => it.productId !== productId))
+    // โค้ดของโฟ
   }
 
+  // TODO (โฟ): เขียนฟังก์ชัน skipItem(productId)
   const skipItem = (productId) => {
-    // TODO (โฟ): ปรับ readyAt ให้เป็นปัจจุบัน และตั้ง skipped = true
-    const now = Date.now()
-    setItems((prev) =>
-      prev.map((it) => (it.productId === productId ? { ...it, readyAt: now, skipped: true } : it))
-    )
+    // โค้ดของโฟ
   }
 
+  // TODO (โฟ): ฟังก์ชันตรวจสอบว่าสินค้านี้อยู่ในตะกร้าแล้วหรือไม่
   const has = (productId) => items.some((it) => it.productId === productId)
-  const count = items.length
-  const now = Date.now()
-  const readyItems = items.filter((it) => it.readyAt <= now || it.skipped)
+
+  // TODO (โฟ): คำนวณ readyItems (สินค้าที่ครบกำหนดเวลาแล้ว)
+  const readyItems = items.filter((it) => it.skipped || (it.readyAt && it.readyAt <= Date.now()))
+
+  const value = {
+    items,
+    readyItems,
+    addItem,
+    removeItem,
+    skipItem,
+    has,
+    devFastForward,
+    setDevFastForward,
+  }
 
   return (
-    <PauseCartContext.Provider
-      value={{
-        items,
-        addItem,
-        removeItem,
-        skipItem,
-        has,
-        readyItems,
-        count,
-        devFastForward,
-        setDevFastForward,
-      }}
-    >
+    <PauseCartContext.Provider value={value}>
       {children}
     </PauseCartContext.Provider>
   )
 }
 
 export function usePauseCart() {
-  const ctx = useContext(PauseCartContext)
-  if (!ctx) {
-    throw new Error('usePauseCart must be used within PauseCartProvider')
+  const context = useContext(PauseCartContext)
+  if (!context) {
+    throw new Error('usePauseCart must be used within a PauseCartProvider')
   }
-  return ctx
+  return context
 }
