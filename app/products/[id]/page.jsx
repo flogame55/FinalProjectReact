@@ -12,7 +12,7 @@ export default async function ProductDetailPage({ params }) {
   const product = await getProductById(id)
   if (!product) notFound()
 
-  const relatedProducts = (await getProducts({ category: product.category })).filter((item) => item.id !== product.id).slice(0, 4)
+  const relatedProducts = (await getProducts({ category: product.category, limit: 6 })).filter((item) => item.id !== product.id).slice(0, 4)
   const categoryLabel = getCategoryLabel(product.category)
   const details = [
     ['แบรนด์', product.brand],
