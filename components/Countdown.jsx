@@ -1,50 +1,40 @@
 'use client'
 
-// ============================================================================
-// 👤 กิต — components/Countdown.jsx
-// ============================================================================
-// หน้าที่: แสดงตัวนับเวลาถอยหลังแบบ Real-time ของแต่ละชิ้นในหน้า /cart
-//
-// 📋 TODO สำหรับกิต:
-// 1. [ ] คำนวณเวลาที่เหลือ: `const diff = readyAt - Date.now()`
-// 2. [ ] ใช้ `useEffect` + `setInterval` (1000ms) อัปเดตเวลาทุก 1 วินาที และอย่าลืม cleanup `clearInterval`
-// 3. [ ] คำนวณแปลงเวลาเป็น วัน, ชั่วโมง, นาที, วินาที:
-//        - `const seconds = Math.floor((timeLeft / 1000) % 60)`
-//        - `const minutes = Math.floor((timeLeft / (1000 * 60)) % 60)`
-//        - `const hours = Math.floor((timeLeft / (1000 * 60 * 60)) % 24)`
-// 4. [ ] รองรับโหมด `isFastForward`: ถ้าเปิด ให้เวลานับเร็วขึ้นสำหรับการ Demo
-// 5. [ ] เมื่อหมดเวลา (`diff <= 0`): แสดงข้อความหรือป้าย Badge ว่า "ครบกำหนดเวลาแล้ว! พร้อมตัดสินใจ"
-// 6. [ ] ปุ่ม "ข้ามเวลารอ": เรียกฟังก์ชัน `onSkip`
-// 7. [ ] ออกแบบตาม genesis-DESIGN.md:
-//        - ตัวเลขนับถอยหลัง: ฟอนต์ `JetBrains Mono` (`font-mono text-xs font-bold text-[#0A0A0A]`)
-//        - กล่องครอบตัวเลข: `bg-slate-100 px-2.5 py-1 rounded-[6px]`
-// ============================================================================
+import { useEffect, useState } from 'react'
 
-import { useState, useEffect } from 'react'
+function formatDuration(milliseconds) {
+  const totalSeconds = Math.max(0, Math.ceil(milliseconds / 1000))
+  const days = Math.floor(totalSeconds / 86400)
+  const clock = [Math.floor(totalSeconds % 86400 / 3600), Math.floor(totalSeconds % 3600 / 60), totalSeconds % 60]
+    .map((part) => String(part).padStart(2, '0')).join(':')
+  return days ? days + ' วัน ' + clock : clock
+}
 
-export default function Countdown({ readyAt, onSkip, isFastForward }) {
-  // TODO (กิต): จัดการ state timeLeft และ useEffect สำรับ setInterval
+export default function Countdown({ readyAt, onSkip, isFastForward = false }) {
+  const [timeLeft, setTimeLeft] = useState(null)
 
+  useEffect(() => {
+    const started = Date.now()
+    const deadline = Number(readyAt)
+    const update = () => {
+      const elapsed = (Date.now() - started) * (isFastForward ? 3600 : 1)
+      setTimeLeft(Math.max(0, deadline - started - elapsed))
+    }
+    update()
+    const timer = setInterval(update, 1000)
+    return () => clearInterval(timer)
+  }, [readyAt, isFastForward])
+
+  const isReady = timeLeft !== null && timeLeft <= 0
   return (
-    <div className="flex items-center justify-between gap-3">
-      {/* 
-        TODO (กิต): 
-        1. แสดงตัวเลขนับถอยหลังแบบ font-mono (ชม:นาที:วินาที)
-        2. ปุ่ม "ข้ามเวลารอ →" เรียก onSkip
-      */}
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-[#6B6B6B]">เหลือเวลาคิด:</span>
-        <span className="font-mono text-xs font-bold text-[#0A0A0A] bg-slate-100 px-2 py-1 rounded-[6px]">
-          --:--:--
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center gap-2.5">
+        <span className="text-xs text-[#6B6B6B]">{isReady ? 'สถานะ' : 'เหลือเวลาคิด'}</span>
+        <span role="timer" aria-live="off" className={'rounded-[6px] px-3 py-2 font-mono text-xs ' + (isReady ? 'bg-emerald-50 text-emerald-700' : 'bg-[#F3F3F6] text-[#33333d]')}>
+          {isReady ? 'พร้อมตัดสินใจแล้ว' : timeLeft === null ? '—:—:—' : formatDuration(timeLeft)}
         </span>
       </div>
-
-      <button
-        onClick={onSkip}
-        className="text-xs text-[#EF4444] hover:underline"
-      >
-        ข้ามเวลารอ →
-      </button>
+      {!isReady && onSkip ? <button type="button" onClick={onSkip} className="min-h-10 rounded-[6px] px-2 text-xs text-[#6B6B6B] underline underline-offset-4 hover:text-[#4F46E5]">ข้ามเวลารอ →</button> : null}
     </div>
   )
 }

@@ -19,6 +19,7 @@
 - **Framework:** Next.js 15 (App Router) + React 19
 - **Styling:** Tailwind CSS v4 + Genesis Design System tokens
 - **Database & Storage:** Supabase (PostgreSQL + Storage bucket `product-images`)
+- **Product test data:** DummyJSON Products API (public; no API key required)
 - **Forms & Validation:** `react-hook-form` + `zod`
 - **Charts:** `recharts`
 
@@ -47,6 +48,13 @@
    ```bash
    node scripts/seed.js
    ```
+   แคตตาล็อกตัวอย่างมีสินค้า 500 รายการใน 10 หมวดหมู่ สคริปต์จะข้ามชื่อสินค้าที่มีอยู่แล้ว และเพิ่มเฉพาะรายการที่ยังไม่มี
+
+หมายเหตุ: `scripts/seed.js` เป็น seed ข้อมูลตัวอย่างของโปรเจกต์ ไม่ใช่ตัวนำเข้าสินค้าจาก DummyJSON หากต้องการคัดลอกสินค้าจาก API เข้า Supabase ให้ดูหัวข้อ “นำสินค้า DummyJSON ขึ้น Supabase” ใน [TEAM_GUIDE.md](./TEAM_GUIDE.md) ก่อน เพราะ schema ปัจจุบันเก็บราคาเป็นจำนวนเต็มและมี foreign key จากประวัติการตัดสินใจ
+
+หน้าแคตตาล็อกอ่านข้อมูลทดสอบจาก `https://dummyjson.com/products` โดยตรง ไม่ต้องใช้ API key; กำหนด `DUMMYJSON_BASE_URL` ใน `.env.local` ได้หากต้องการใช้ DummyJSON server อื่น ค่าเริ่มต้นจะใช้ public API และใช้ข้อมูลตัวอย่างในโปรเจกต์เมื่อ API ติดต่อไม่ได้
+
+DummyJSON ส่งราคาเป็น USD; หน้าเว็บแปลงเป็น THB โดยใช้อัตรา USD/THB ล่าสุดจาก [Frankfurter API](https://frankfurter.dev/) และแคชอัตราไว้ 1 ชั่วโมง จากนั้นปัดราคาสินค้าเป็นจำนวนเต็มที่ลงท้ายด้วย 0 หรือ 9 (เลือกค่าที่ใกล้ยอดแปลงที่สุด) พร้อมแสดงเรตและวันที่อ้างอิงใต้ราคาเงินบาท หาก API อัตราแลกเปลี่ยนติดต่อไม่ได้ จะใช้อัตราสำรอง `USD_TO_THB_FALLBACK_RATE` (ค่าเริ่มต้น `33.62`) และระบุว่าเป็นเรตสำรอง สินค้าตัวอย่าง 500 รายการของโปรเจกต์ตั้งราคาเป็น THB อยู่แล้ว จึงไม่มีการแปลงซ้ำ อัตราที่แสดงเป็นราคาอ้างอิงสำหรับเว็บทดสอบ ไม่ใช่อัตรารับชำระเงินจริง
 
 5. **รัน Dev Server:**
    ```bash

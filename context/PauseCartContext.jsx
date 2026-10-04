@@ -1,99 +1,144 @@
 'use client'
 
-// ============================================================================
-// 👤 โฟ — context/PauseCartContext.jsx
-// ============================================================================
-// หน้าที่: จัดการ Global State ของ "ตะกร้าพัก" (Cooling-off Cart) ซิงก์กับ localStorage + จัดการ sessionId
-//
-// 📋 TODO สำหรับโฟ:
-// 1. [ ] จัดการ State `sessionId` เพื่อแยกผู้ใช้แต่ละคน (ไม่ให้สถิติปนกันบน Vercel):
-//        - อ่านจาก localStorage ('pause-session-id')
-//        - ถ้ายังไม่มี ให้สร้างด้วย `crypto.randomUUID()` แล้วบันทึกลง localStorage
-//        - บันทึกลง Cookie ด้วย เพื่อให้ Server Component (หน้า /history) อ่านได้:
-//          `document.cookie = 'pause-session-id=' + sid + '; path=/; max-age=31536000; SameSite=Lax'`
-//
-// 2. [ ] สร้าง State สำหรับตะกร้าพัก:
-//        - `const [items, setItems] = useState([])`
-//        - `const [devFastForward, setDevFastForward] = useState(false)`
-//        (โครงสร้างไอเทม: `{ productId: number, addedAt: number, readyAt: number, skipped: boolean }`)
-//
-// 3. [ ] ซิงก์กับ Browser `localStorage` (key: "pause-cart"):
-//        - โหลดครั้งแรกตอน mount:
-//          ```javascript
-//          useEffect(() => {
-//            try {
-//              const stored = localStorage.getItem('pause-cart')
-//              if (stored) setItems(JSON.parse(stored))
-//            } catch (e) {
-//              console.error(e)
-//            }
-//          }, [])
-//          ```
-//        - เซฟอัตโนมัติเมื่อ items เปลี่ยน:
-//          ```javascript
-//          useEffect(() => {
-//            try {
-//              localStorage.setItem('pause-cart', JSON.stringify(items))
-//            } catch (e) {
-//              console.error(e)
-//            }
-//          }, [items])
-//          ```
-// 4. [ ] ฟังก์ชัน `addItem(productId, durationHours)`:
-//        - คำนวณ `readyAt = Date.now() + (durationHours * 3600 * 1000)`
-//        - เพิ่มเข้า items ถ้ายังไม่มีสินค้านี้
-// 5. [ ] ฟังก์ชัน `removeItem(productId)`:
-//        - กรองไอเทมที่ไม่ตรงกับ productId ออก: `setItems(prev => prev.filter(...))`
-// 6. [ ] ฟังก์ชัน `skipItem(productId)`:
-//        - ตั้งค่า `readyAt = Date.now()` และ `skipped = true`
-// 7. [ ] ตัวแปรคำนวณ `readyItems`:
-//        - `items.filter(it => it.skipped || (it.readyAt && it.readyAt <= Date.now()))`
-// ============================================================================
-
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { convertUsdToThb } from '@/lib/pricing'
 
 const STORAGE_KEY = 'pause-cart'
+const SESSION_KEY = 'pause-session-id'
 const PauseCartContext = createContext(null)
 
-export function PauseCartProvider({ children }) {
-  // TODO (โฟ): สร้าง state sessionId, items, devFastForward
-  const [sessionId, setSessionId] = useState('')
+function readItems(value, exchangeRate) {
+  try {
+    const parsed = JSON.parse(value || '[]')
+    return Array.isArray(parsed) ? parsed.filter((item) =>
+      Number.isInteger(item?.productId) && item.productId > 0
+      && Number.isFinite(item.addedAt) && Number.isFinite(item.readyAt),
+    ).map((item) => {
+      const product = item.product
+      const isDummyJsonProduct = product?.imageUrl?.includes('cdn.dummyjson.com')
+      if (!isDummyJsonProduct) return item
 
-  // TODO (โฟ): เขียน useEffect สร้าง/อ่าน sessionId และซิงก์ข้อมูลเข้า-ออกจาก localStorage
+      const hasUsdSnapshot = Number.isFinite(product.priceUsd) && Number.isFinite(product.usdToThbRate)
+      const priceUsd = hasUsdSnapshot ? product.priceUsd : Number(product.price)
+      const rate = hasUsdSnapshot ? product.usdToThbRate : exchangeRate?.rate
+      if (!Number.isFinite(priceUsd) || !Number.isFinite(rate)) return item
 
-  // TODO (โฟ): เขียนฟังก์ชัน addItem, removeItem, skipItem, has, readyItems
-  const items = []
-  const readyItems = []
-  const addItem = (productId, durationHours) => {}
-  const removeItem = (productId) => {}
-  const skipItem = (productId) => {}
-  const has = (productId) => false
-  const devFastForward = false
-  const setDevFastForward = () => {}
-
-  const value = {
-    sessionId,
-    items,
-    readyItems,
-    addItem,
-    removeItem,
-    skipItem,
-    has,
-    devFastForward,
-    setDevFastForward,
+      const price = convertUsdToThb(priceUsd, rate)
+      return {
+        ...item,
+        product: {
+          ...product,
+          price,
+          priceUsd,
+          usdToThbRate: rate,
+          exchangeRateDate: hasUsdSnapshot ? product.exchangeRateDate : exchangeRate?.date,
+          exchangeRateSource: hasUsdSnapshot ? product.exchangeRateSource : exchangeRate?.source,
+        },
+      }
+    }) : []
+  } catch {
+    return []
   }
+}
 
-  return (
-    <PauseCartContext.Provider value={value}>
-      {children}
-    </PauseCartContext.Provider>
-  )
+function productSnapshot(product) {
+  if (!product) return undefined
+  return {
+    id: product.id,
+    name: product.name,
+    price: product.price,
+    priceUsd: product.priceUsd,
+    usdToThbRate: product.usdToThbRate,
+    exchangeRateDate: product.exchangeRateDate,
+    exchangeRateSource: product.exchangeRateSource,
+    imageUrl: product.imageUrl,
+    category: product.category,
+  }
+}
+
+export function PauseCartProvider({ children, exchangeRate }) {
+  const exchangeRateRate = exchangeRate?.rate
+  const exchangeRateDate = exchangeRate?.date
+  const exchangeRateSource = exchangeRate?.source
+  const [items, setItems] = useState([])
+  const [sessionId, setSessionId] = useState('')
+  const [hydrated, setHydrated] = useState(false)
+  const [now, setNow] = useState(0)
+  const [devFastForward, setDevFastForward] = useState(false)
+
+  useEffect(() => {
+    let sid = ''
+    const currentExchangeRate = { rate: exchangeRateRate, date: exchangeRateDate, source: exchangeRateSource }
+    try {
+      setItems(readItems(localStorage.getItem(STORAGE_KEY), currentExchangeRate))
+      sid = localStorage.getItem(SESSION_KEY) || crypto.randomUUID()
+      localStorage.setItem(SESSION_KEY, sid)
+    } catch {
+      sid = crypto.randomUUID()
+    }
+    setSessionId(sid)
+    document.cookie = SESSION_KEY + '=' + encodeURIComponent(sid) + '; path=/; max-age=31536000; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : '')
+    setNow(Date.now())
+    setHydrated(true)
+    const syncStorage = (event) => {
+      if (event.key === STORAGE_KEY) setItems(readItems(event.newValue, currentExchangeRate))
+    }
+    window.addEventListener('storage', syncStorage)
+    return () => window.removeEventListener('storage', syncStorage)
+  }, [exchangeRateRate, exchangeRateDate, exchangeRateSource])
+
+  useEffect(() => {
+    if (!hydrated) return
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)) } catch { /* Cart remains available in memory. */ }
+  }, [items, hydrated])
+
+  useEffect(() => {
+    if (!hydrated || !items.length) return
+    let previous = Date.now()
+    const timer = setInterval(() => {
+      const current = Date.now()
+      if (devFastForward) {
+        const extraElapsed = (current - previous) * 3599
+        setItems((previousItems) => previousItems.map((item) => item.skipped ? item : { ...item, readyAt: Math.max(current, item.readyAt - extraElapsed) }))
+      }
+      previous = current
+      setNow(current)
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [hydrated, items.length, devFastForward])
+
+  const addItem = useCallback((id, durationHours, product) => {
+    const productId = Number(id)
+    const hours = Number(durationHours)
+    if (!Number.isInteger(productId) || productId < 1 || !Number.isFinite(hours) || hours < 1 || hours > 168) return
+    const timestamp = Date.now()
+    setNow(timestamp)
+    setItems((previous) => previous.some((item) => item.productId === productId) ? previous : [
+      ...previous, { productId, addedAt: timestamp, readyAt: timestamp + hours * 3600000, skipped: false, product: productSnapshot(product) },
+    ])
+  }, [])
+
+  const removeItem = useCallback((id) => setItems((previous) => previous.filter((item) => item.productId !== Number(id))), [])
+
+  const skipItem = useCallback((id, product) => {
+    const productId = Number(id)
+    if (!Number.isInteger(productId) || productId < 1) return
+    const timestamp = Date.now()
+    setNow(timestamp)
+    setItems((previous) => previous.some((item) => item.productId === productId)
+      ? previous.map((item) => item.productId === productId ? { ...item, readyAt: timestamp, skipped: true } : item)
+      : [...previous, { productId, addedAt: timestamp, readyAt: timestamp, skipped: true, product: productSnapshot(product) }])
+  }, [])
+
+  const has = useCallback((id) => items.some((item) => item.productId === Number(id)), [items])
+  const readyItems = useMemo(() => items.filter((item) => item.skipped || item.readyAt <= now), [items, now])
+  const value = { sessionId, items, readyItems, addItem, removeItem, skipItem, has, hydrated, now, devFastForward, setDevFastForward }
+
+  return <PauseCartContext.Provider value={value}>{children}</PauseCartContext.Provider>
 }
 
 export function usePauseCart() {
   const context = useContext(PauseCartContext)
-  if (!context) {
-    throw new Error('usePauseCart must be used within a PauseCartProvider')
-  }
+  if (!context) throw new Error('usePauseCart must be used within a PauseCartProvider')
   return context
 }

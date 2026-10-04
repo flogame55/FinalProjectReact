@@ -1,70 +1,94 @@
 'use client'
 
-// ============================================================================
-// 👤 โฟ — app/cart/page.jsx
-// ============================================================================
-// หน้าที่: หน้าแสดงตะกร้าพัก (Cooling-off Cart) พร้อม Countdown Timer ของแต่ละชิ้น
-//
-// 📋 TODO สำหรับโฟ:
-// 1. [ ] เรียกใช้ `usePauseCart()` เพื่อดึง:
-//        `const { items, removeItem, skipItem, devFastForward, setDevFastForward } = usePauseCart()`
-// 2. [ ] จัดการกรณี Empty State หากไม่มีสินค้าในตะกร้า (`items.length === 0`):
-//        แสดงกล่อง `rounded-[12px] border border-dashed border-[#E8E8EC] p-8 text-center`
-// 3. [ ] สวิตช์เปิด/ปิดโหมด Demo เร่งเวลา (Dev FastForward):
-//        ปุ่มกดสลับค่า boolean: `setDevFastForward(!devFastForward)`
-// 4. [ ] วนลูป map สินค้าใน `items`:
-//        - แสดงชื่อสินค้า, ราคา, เวลาที่เริ่มพัก
-//        - วางคอมโพเนนต์ `<Countdown readyAt={item.readyAt} onSkip={() => skipItem(item.productId)} isFastForward={devFastForward} />`
-//        - ปุ่มลบออกจากตะกร้าพัก: `removeItem(item.productId)`
-// 5. [ ] วางแถบลิงก์ด้านล่างเพื่อพาไปหน้า `/ready` (รายการพร้อมตัดสินใจ)
-// 6. [ ] ออกแบบ UI ตาม genesis-DESIGN.md:
-//        - การ์ดสินค้าแต่ละชิ้น: `rounded-[12px] border border-[#E8E8EC] bg-white p-4`
-//        - ปุ่ม: `rounded-[6px]`
-// ============================================================================
-
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePauseCart } from '@/context/PauseCartContext'
 import Countdown from '@/components/Countdown'
-import { FALLBACK_PRODUCTS } from '@/lib/products'
+import ExchangeRateCaption from '@/components/ExchangeRateCaption'
+
+const formatPrice = (value) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 2 }).format(Number(value) || 0)
 
 export default function CartPage() {
-  const { items = [], removeItem, skipItem, devFastForward, setDevFastForward } = usePauseCart() || {}
+  const { items, readyItems, removeItem, skipItem, hydrated, now } = usePauseCart()
+  const total = items.reduce((sum, item) => sum + Number(item.product?.price || 0), 0)
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center pb-2 border-b border-[#E8E8EC]">
+    <div className="space-y-8 pb-12 sm:space-y-10">
+      <div className="page-intro flex flex-wrap items-end justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#0A0A0A]">
-            ตะกร้าพัก (Cooling-off Cart)
-          </h1>
-          <p className="text-xs text-[#6B6B6B]">
-            สินค้าที่กำลังอยู่ในระยะเวลาหน่วงความคิด
-          </p>
+          <p className="eyebrow">Your pause space</p>
+          <h1 className="page-heading mt-3">ตะกร้าพัก<span className="ml-3 align-top text-lg text-[#9C9C9C]">{items.length.toString().padStart(2, '0')}</span></h1>
+          <p className="mt-4 max-w-xl text-sm leading-7 text-[#6B6B6B] sm:text-base">สิ่งที่ชอบยังอยู่ตรงนี้ ให้เวลาตัวเองก่อนตัดสินใจ<br className="hidden sm:block" /> คุณกลับมาเลือกได้เสมอเมื่อพร้อม</p>
         </div>
-
-        {/* 
-          TODO (โฟ): สวิตช์ toggle เปิด/ปิด Dev FastForward 
-        */}
-        <div className="text-xs flex items-center gap-2">
-          <span>Dev FastForward:</span>
-          <button
-            onClick={() => setDevFastForward?.(!devFastForward)}
-            className="rounded-[6px] border border-[#E8E8EC] px-2 py-1 text-xs"
-          >
-            {devFastForward ? 'ON (เร่งเวลา)' : 'OFF (เวลาจริง)'}
-          </button>
-        </div>
+        <Link href="/products" className="button-secondary">เลือกดูสินค้าต่อ <span aria-hidden="true">↗</span></Link>
       </div>
 
-      {/* 
-        TODO (โฟ): 
-        1. แสดง Empty State ถ้าไม่มีสินค้า (items.length === 0)
-        2. แสดงรายการสินค้าที่กำลังพัก พร้อมคอมโพเนนต์ <Countdown /> และปุ่มลบ
-        3. ลิงก์พาไปหน้า /ready
-      */}
-      <div className="rounded-[12px] border border-[#E8E8EC] bg-white p-6">
-        {/* เขียนเงื่อนไขแสดงผลตาม TODO ด้านบน */}
-      </div>
+      {!hydrated ? (
+        <div className="surface p-10 text-center text-sm text-[#6B6B6B]" role="status">กำลังเปิดตะกร้าพักของคุณ…</div>
+      ) : items.length === 0 ? (
+        <div className="empty-state surface mx-auto flex min-h-[390px] flex-col items-center justify-center px-6 py-16 text-center">
+          <div className="mb-7 flex h-16 w-16 items-center justify-center rounded-full bg-slate-50 text-slate-400">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" aria-hidden="true"><path d="M5 7h14l1 13H4L5 7Z" /><path d="M9 8V6a3 3 0 0 1 6 0v2" /></svg>
+          </div>
+          <p className="eyebrow">Good things can wait</p>
+          <h2 className="mt-3 text-2xl font-medium tracking-tight">พื้นที่สำหรับสิ่งที่คุณกำลังคิดถึง</h2>
+          <p className="mt-3 max-w-sm text-sm leading-7 text-[#6B6B6B]">เจอสินค้าที่ชอบแล้วกด “พักคิดก่อน”<br />เพื่อเก็บไว้ที่นี่ แล้วค่อยกลับมาดูอีกครั้ง</p>
+          <Link href="/products" className="button-primary mt-7">ค้นหาสิ่งที่ใช่ <span aria-hidden="true">→</span></Link>
+        </div>
+      ) : (
+        <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="space-y-4">
+            {items.map((item) => {
+              const product = item.product
+              const isReady = item.skipped || item.readyAt <= now
+              return (
+                <article key={item.productId} className="surface overflow-hidden p-4 sm:p-6">
+                  <div className="flex gap-4 sm:gap-6">
+                    <Link href={`/products/${item.productId}`} className="relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[#F6F6F7] sm:h-32 sm:w-32" aria-label={`ดู ${product?.name || 'รายละเอียดสินค้า'}`}>
+                      {product?.imageUrl ? <Image src={product.imageUrl} alt={product.name} fill sizes="128px" className="object-contain p-3" /> : <span className="text-xs text-[#9C9C9C]">ไม่มีภาพ</span>}
+                    </Link>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-[11px] uppercase tracking-widest text-[#6B6B6B]">{product?.category || 'สินค้าในตะกร้า'}</p>
+                          <h2 className="mt-2 text-sm font-medium leading-6 sm:text-base"><Link href={`/products/${item.productId}`} className="hover:text-[#6366F1]">{product?.name || `สินค้า #${item.productId}`}</Link></h2>
+                        </div>
+                        <button type="button" onClick={() => removeItem(item.productId)} className="-mr-2 -mt-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-[6px] text-[#9C9C9C] hover:bg-rose-50 hover:text-red-600" aria-label={`นำ ${product?.name || 'สินค้า'} ออกจากตะกร้าพัก`}>
+                          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7M14 10v7" /></svg>
+                        </button>
+                      </div>
+                      <p className="mt-2 text-base font-medium">{product ? formatPrice(product.price) : 'ดูราคาที่หน้าสินค้า'}</p>
+                      <ExchangeRateCaption product={product} className="mt-1 text-[10px] text-[#85858d]" />
+                      <p className="mt-3 text-xs text-[#6B6B6B]">เริ่มพัก {new Date(item.addedAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}</p>
+                    </div>
+                  </div>
+                  <div className="mt-5 border-t border-[#E8E8EC] pt-4">
+                    {isReady ? (
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <span className="inline-flex items-center gap-2 text-xs text-emerald-700"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />พร้อมให้คุณตัดสินใจแล้ว</span>
+                        <Link href="/ready" className="text-xs font-medium text-[#4F46E5] hover:underline">กลับมาทบทวน <span aria-hidden="true">→</span></Link>
+                      </div>
+                    ) : <Countdown readyAt={item.readyAt} onSkip={() => skipItem(item.productId, product)} isFastForward={false} />}
+                  </div>
+                </article>
+              )
+            })}
+          </div>
+
+          <aside className="surface p-6 lg:sticky lg:top-28">
+            <p className="eyebrow">A moment to reflect</p>
+            <h2 className="mt-3 text-xl font-medium tracking-tight">ให้เวลาความต้องการ</h2>
+            <p className="mt-3 text-sm leading-7 text-[#6B6B6B]">เมื่อเวลาผ่านไป ลองถามตัวเองอีกครั้งว่า “สิ่งนี้ยังเหมาะกับชีวิตของฉันไหม?”</p>
+            <dl className="my-6 space-y-4 border-y border-[#E8E8EC] py-5 text-sm">
+              <div className="flex justify-between"><dt className="text-[#6B6B6B]">เก็บไว้ทั้งหมด</dt><dd>{items.length} รายการ</dd></div>
+              <div className="flex justify-between"><dt className="text-[#6B6B6B]">พร้อมตัดสินใจ</dt><dd>{readyItems.length} รายการ</dd></div>
+              <div className="flex justify-between"><dt className="text-[#6B6B6B]">มูลค่าสินค้า</dt><dd className="font-medium">{formatPrice(total)}</dd></div>
+            </dl>
+            <Link href="/ready" className="button-primary w-full">รายการพร้อมตัดสินใจ <span aria-hidden="true">→</span></Link>
+            <p className="mt-4 text-center text-xs leading-5 text-[#6B6B6B]">ตะกร้านี้ยังไม่ใช่คำสั่งซื้อ</p>
+          </aside>
+        </div>
+      )}
     </div>
   )
 }

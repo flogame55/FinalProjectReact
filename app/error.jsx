@@ -1,41 +1,25 @@
 'use client'
 
-// ============================================================================
-// 👤 พี — app/error.jsx (Error Boundary สำหรับดักจับและแสดงข้อผิดพลาดของหน้า)
-// ============================================================================
-// 📋 TODO สำหรับพี:
-// 1. [ ] รับ props `{ error, reset }` จาก Next.js
-// 2. [ ] บันทึก log error ลง console
-// 3. [ ] ออกแบบ UI แจ้งเตือนข้อผิดพลาดตาม genesis-DESIGN.md:
-//        - ข้อความเตือนสีแดง Coral/Red (#EF4444)
-//        - ปุ่ม "ลองใหม่อีกครั้ง" เรียก `reset()` สไตล์ Primary หรือ Secondary (radius 6px)
-// ============================================================================
-
+import Link from 'next/link'
 import { useEffect } from 'react'
 
 export default function ErrorBoundary({ error, reset }) {
   useEffect(() => {
-    // TODO (พี): จัดการ log error
     console.error('Captured error in ErrorBoundary:', error)
   }, [error])
 
-  // TODO (พี): ออกแบบ UI แจ้งเตือน error ตาม genesis-DESIGN.md
   return (
-    <div className="flex flex-col items-center justify-center py-20 text-center">
-      <span className="text-5xl mb-4">⚠️</span>
-      <h2 className="text-xl font-bold text-[#0A0A0A]">เกิดข้อผิดพลาดในการโหลดข้อมูล</h2>
-      <p className="mt-2 text-sm text-[#EF4444] max-w-md">
-        {error?.message || 'เกิดข้อผิดพลาดไม่ทราบสาเหตุ'}
-      </p>
-      <div className="mt-6">
-        {/* TODO (พี): ผูกปุ่ม reset เพื่อให้ผู้ใช้กดโหลดข้อมูลใหม่ได้ */}
-        <button
-          onClick={() => reset()}
-          className="rounded-[6px] bg-[#6366F1] px-4 py-2 text-sm font-medium text-white hover:bg-[#4F46E5] transition"
-        >
-          ลองใหม่อีกครั้ง
-        </button>
+    <section className="mx-auto max-w-2xl py-16 text-center sm:py-24" aria-labelledby="error-heading">
+      <div className="mx-auto mb-8 flex h-16 w-16 items-center justify-center rounded-full border border-[#E8E8EC] bg-white text-[#6B6B6B]" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M8 4H6a2 2 0 0 0-2 2v2M16 4h2a2 2 0 0 1 2 2v2M4 16v2a2 2 0 0 0 2 2h2M20 16v2a2 2 0 0 1-2 2h-2M12 8v5M12 16h.01" strokeLinecap="round" /></svg>
       </div>
-    </div>
+      <p className="eyebrow mb-4">LET’S TAKE A MOMENT</p>
+      <h1 id="error-heading" className="page-heading">ขอพักสักครู่.</h1>
+      <p className="mx-auto mt-5 max-w-md text-sm leading-7 text-[#6B6B6B]">เรายังโหลดหน้านี้ไม่ได้ในตอนนี้<br />ลองอีกครั้ง หรือกลับไปเริ่มต้นที่หน้าแรกได้เลย</p>
+      <div className="mt-8 flex flex-wrap justify-center gap-3">
+        <button type="button" onClick={reset} className="button-primary">ลองใหม่อีกครั้ง <span aria-hidden="true">↻</span></button>
+        <Link href="/" className="button-secondary">กลับหน้าแรก</Link>
+      </div>
+    </section>
   )
 }

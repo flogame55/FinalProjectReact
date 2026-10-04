@@ -1,68 +1,96 @@
 'use client'
 
-// ============================================================================
-// 👤 พี — components/PauseButton.jsx
-// ============================================================================
-// หน้าที่: คอมโพเนนต์เลือกเวลาพักคิด (Cooling-off Period) + ปุ่มหยุดคิดก่อน + ปุ่มข้ามไปเลย
-//
-// 📋 TODO สำหรับพี:
-// 1. [ ] กำหนดตัวเลือกเวลาสำเร็จรูป (Presets):
-//        - 1 ชั่วโมง, 6 ชั่วโมง, 12 ชั่วโมง, 24 ชั่วโมง (มาตรฐาน), 48 ชั่วโมง, 7 วัน, และ 'กำหนดเอง...'
-// 2. [ ] สร้าง State:
-//        - `const [preset, setPreset] = useState('24')`
-//        - `const [customHours, setCustomHours] = useState(24)`
-// 3. [ ] เช็คว่าสินค้านี้อยู่ในตะกร้าพักแล้วหรือยัง:
-//        - `const isAlreadyInCart = has?.(productId)`
-//        - ถ้ามีแล้ว ให้แสดงข้อความแจ้งเตือน "สินค้านี้อยู่ในตะกร้าพักแล้ว" พร้อมปุ่มพาไปหน้า `/cart`
-// 4. [ ] ฟังก์ชัน handlePause ("หยุดคิดก่อน"):
-//        - คำนวณชั่วโมง: `const hours = preset === 'custom' ? Number(customHours) : Number(preset)`
-//        - เรียก `addItem(productId, hours)` จาก `usePauseCart()`
-//        - ใช้ `router.push('/cart')` นำทางไปหน้าตะกร้าพัก
-// 5. [ ] ฟังก์ชัน handleSkip ("ข้ามไปเลย / ซื้อเลย"):
-//        - เรียก `skipItem(productId)` จาก `usePauseCart()`
-//        - ใช้ `router.push('/ready')` นำทางไปหน้าพร้อมตัดสินใจ
-// 6. [ ] ออกแบบ UI ตามมาตรฐาน genesis-DESIGN.md:
-//        - กล่องครอบ: `rounded-[12px] border border-[#E8E8EC] bg-white p-4`
-//        - Select / Inputs: `rounded-[6px] border border-[#E8E8EC] px-3 py-2 text-sm text-[#0A0A0A]`
-//        - ปุ่ม "หยุดคิดก่อน": `rounded-[6px] bg-[#6366F1] hover:bg-[#4F46E5] text-white text-sm font-medium`
-//        - ปุ่ม "ข้ามไปเลย": `rounded-[6px] border border-[#EF4444] text-[#EF4444] hover:bg-rose-50 text-sm font-medium`
-// ============================================================================
-
-import { useState } from 'react'
+import { useId, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { usePauseCart } from '@/context/PauseCartContext'
 
-export default function PauseButton({ productId }) {
+const PRESETS = [
+  { value: '1', label: '1 ชั่วโมง' },
+  { value: '6', label: '6 ชั่วโมง' },
+  { value: '12', label: '12 ชั่วโมง' },
+  { value: '24', label: '24 ชั่วโมง' },
+  { value: '48', label: '48 ชั่วโมง' },
+  { value: '168', label: '7 วัน' },
+]
+
+export default function PauseButton({ productId, product }) {
   const router = useRouter()
-  const { addItem, skipItem, has } = usePauseCart() || {}
+  const customInputId = useId()
+  const { addItem, skipItem, has, hydrated } = usePauseCart()
+  const [preset, setPreset] = useState('24')
+  const [customHours, setCustomHours] = useState('24')
+  const hours = Number(preset === 'custom' ? customHours : preset)
+  const validHours = Number.isFinite(hours) && hours >= 1 && hours <= 168
+  const isAlreadyInCart = has(productId)
 
-  // TODO (พี): ประกาศ state ตัวเลือกเวลา
-  // const [preset, setPreset] = useState('24')
-  // const [customHours, setCustomHours] = useState(24)
+  if (isAlreadyInCart) {
+    return (
+      <div className="surface space-y-4 p-5 sm:p-6">
+        <div className="flex items-start gap-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700" aria-hidden="true">✓</span>
+          <div>
+            <h2 className="font-medium">เก็บไว้ให้เวลาตัวเองแล้ว</h2>
+            <p className="mt-1 text-sm leading-6 text-[#6B6B6B]">สินค้านี้อยู่ในตะกร้าพัก กลับมาดูได้เมื่อคุณพร้อม</p>
+          </div>
+        </div>
+        <Link href="/cart" className="button-primary w-full">ไปที่ตะกร้าพัก <span aria-hidden="true">↗</span></Link>
+      </div>
+    )
+  }
 
-  // TODO (พี): เขียนฟังก์ชัน handlePause และ handleSkip
+  function handlePause() {
+    if (!validHours || !hydrated) return
+    addItem(productId, hours, product)
+    router.push('/cart')
+  }
+
+  function handleSkip() {
+    skipItem(productId, product)
+    router.push('/ready')
+  }
 
   return (
-    <div className="rounded-[12px] border border-[#E8E8EC] bg-white p-4 space-y-4">
-      {/* 
-        TODO (พี): แสดง Dropdown ตัวเลือกเวลาพักคิด (1h, 6h, 12h, 24h, 48h, 7d, กำหนดเอง)
-        - ถ้าเลือก 'กำหนดเอง' ให้แสดงช่อง input กรอกชั่วโมง (1–168 ชม.)
-      */}
+    <div className="surface space-y-5 p-5 sm:p-6">
       <div>
-        <label className="block text-xs font-semibold text-[#0A0A0A] mb-1.5">
-          เลือกระยะเวลาพักคิด (Cooling-off Period)
-        </label>
-        {/* เขียน <select> และ <option> ที่นี่ */}
+        <p className="eyebrow">A little time, a better choice</p>
+        <h2 className="mt-2 text-xl font-medium tracking-tight">ชอบแล้ว ลองพักไว้ก่อน</h2>
+        <p className="mt-2 text-sm leading-6 text-[#6B6B6B]">ให้เวลาตัวเองสักนิด แล้วค่อยกลับมาตัดสินใจอีกครั้ง</p>
       </div>
 
-      {/* 
-        TODO (พี): ปุ่มดำเนินการ 2 ปุ่ม:
-        1. ปุ่ม "⏸ หยุดคิดก่อน (เข้าตะกร้าพัก)" -> เรียก handlePause
-        2. ปุ่ม "⚡ ข้ามไปเลย / ซื้อเลย" -> เรียก handleSkip
-      */}
-      <div className="flex flex-col sm:flex-row gap-2 pt-2">
-        {/* เขียน <button> ทั้งสองที่นี่ */}
+      <fieldset>
+        <legend className="mb-3 text-sm font-medium">อยากให้เวลาตัวเองเท่าไหร่?</legend>
+        <div className="grid grid-cols-3 gap-2">
+          {PRESETS.map((option) => (
+            <button
+              type="button"
+              key={option.value}
+              aria-pressed={preset === option.value}
+              onClick={() => setPreset(option.value)}
+              className={`min-h-11 rounded-[6px] border px-2 py-2 text-sm transition-colors ${preset === option.value ? 'border-[#6366F1] bg-indigo-50 text-indigo-700' : 'border-[#E8E8EC] bg-white text-[#6B6B6B] hover:border-slate-400'}`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+        <button type="button" aria-expanded={preset === 'custom'} onClick={() => setPreset(preset === 'custom' ? '24' : 'custom')} className="mt-3 min-h-9 text-xs text-[#6B6B6B] underline underline-offset-4 hover:text-[#0A0A0A]">กำหนดเวลาเอง</button>
+        {preset === 'custom' && (
+          <div className="mt-2">
+            <label htmlFor={customInputId} className="mb-2 block text-sm">จำนวนชั่วโมง (1–168)</label>
+            <input id={customInputId} type="number" min="1" max="168" step="any" value={customHours} onChange={(event) => setCustomHours(event.target.value)} aria-invalid={!validHours} aria-describedby={!validHours ? `${customInputId}-error` : undefined} className="input-field w-full" />
+            {!validHours && <p id={`${customInputId}-error`} className="mt-2 text-xs text-red-600">กรุณาระบุเวลาระหว่าง 1 ถึง 168 ชั่วโมง</p>}
+          </div>
+        )}
+      </fieldset>
+
+      <div className="space-y-2 border-t border-[#E8E8EC] pt-5">
+        <button type="button" disabled={!hydrated || !validHours} onClick={handlePause} className="button-primary w-full">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M8 5v14M16 5v14" /></svg>
+          พักคิดก่อน
+        </button>
+        <button type="button" disabled={!hydrated} onClick={handleSkip} className="button-quiet w-full text-xs">พร้อมตัดสินใจแล้ว <span aria-hidden="true">→</span></button>
       </div>
+      <p className="text-center text-xs leading-5 text-[#6B6B6B]">ยังไม่มีการสั่งซื้อหรือเรียกเก็บเงินในขั้นตอนนี้</p>
     </div>
   )
 }
