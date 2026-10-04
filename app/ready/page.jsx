@@ -6,17 +6,45 @@ import Link from 'next/link'
 import { usePauseCart } from '@/context/PauseCartContext'
 import CheckoutForm from '@/components/CheckoutForm'
 import ExchangeRateCaption from '@/components/ExchangeRateCaption'
+import { confirmPurchaseAction, passItemAction } from '@/app/actions'
 
 const formatPrice = (value) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 2 }).format(Number(value) || 0)
 
 export default function ReadyPage() {
-  const { readyItems, removeItem, hydrated } = usePauseCart()
+  const { readyItems, removeItem, hydrated, sessionId } = usePauseCart()
   const [selectedForCheckout, setSelectedForCheckout] = useState(null)
   const [notice, setNotice] = useState('')
 
-  function handlePass(item) {
+  async function handlePass(item) {
     removeItem(item.productId)
-    setNotice('นำสินค้าออกจากตะกร้าพักแล้ว การเปลี่ยนใจครั้งนี้ยังไม่ได้บันทึกลงประวัติ')
+    const res = await passItemAction({
+      sessionId,
+      productId: item.productId,
+      price: item.product?.price || 0,
+      skipped: item.skipped,
+    })
+    if (res?.ok) {
+      setNotice('นำสินค้าออกจากตะกร้าพักแล้ว และบันทึกการเปลี่ยนใจลงในประวัติเรียบร้อย 🎉')
+    } else {
+      setNotice('นำสินค้าออกจากตะกร้าพักแล้ว')
+    }
+  }
+
+  async function handleConfirm(formData) {
+    if (!selectedForCheckout) return { ok: false }
+    const res = await confirmPurchaseAction({
+      sessionId,
+      productId: selectedForCheckout.productId,
+      price: selectedForCheckout.product?.price || 0,
+      skipped: selectedForCheckout.skipped,
+      form: formData,
+    })
+    if (res?.ok) {
+      removeItem(selectedForCheckout.productId)
+      setSelectedForCheckout(null)
+      setNotice('ยืนยันคำสั่งซื้อสำเร็จ! บันทึกผลลงในประวัติและสถิติเรียบร้อย 🛍️')
+    }
+    return res
   }
 
   return (
@@ -37,7 +65,12 @@ export default function ReadyPage() {
       {!hydrated ? (
         <div className="surface p-10 text-center text-sm text-[#6B6B6B]" role="status">กำลังเปิดรายการของคุณ…</div>
       ) : selectedForCheckout ? (
-        <CheckoutForm item={selectedForCheckout} checkoutAvailable={false} onCancel={() => setSelectedForCheckout(null)} />
+        <CheckoutForm
+          item={selectedForCheckout}
+          checkoutAvailable={true}
+          onConfirm={handleConfirm}
+          onCancel={() => setSelectedForCheckout(null)}
+        />
       ) : readyItems.length === 0 ? (
         <div className="empty-state surface flex min-h-[390px] flex-col items-center justify-center px-6 py-16 text-center">
           <div className="mb-7 flex h-16 w-16 items-center justify-center rounded-full bg-slate-50 text-slate-400">
