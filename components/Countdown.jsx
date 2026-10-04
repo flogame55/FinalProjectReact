@@ -14,14 +14,11 @@ export default function Countdown({ readyAt, onSkip, isFastForward = false }) {
   const [timeLeft, setTimeLeft] = useState(null)
 
   useEffect(() => {
-    const started = Date.now()
-    const deadline = Number(readyAt)
     const update = () => {
-      const elapsed = (Date.now() - started) * (isFastForward ? 3600 : 1)
-      setTimeLeft(Math.max(0, deadline - started - elapsed))
+      setTimeLeft(Math.max(0, Number(readyAt) - Date.now()))
     }
     update()
-    const timer = setInterval(update, 1000)
+    const timer = setInterval(update, isFastForward ? 250 : 1000)
     return () => clearInterval(timer)
   }, [readyAt, isFastForward])
 

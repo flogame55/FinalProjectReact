@@ -9,7 +9,7 @@ import ExchangeRateCaption from '@/components/ExchangeRateCaption'
 const formatPrice = (value) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 2 }).format(Number(value) || 0)
 
 export default function CartPage() {
-  const { items, readyItems, removeItem, skipItem, hydrated, now } = usePauseCart()
+  const { items, readyItems, removeItem, skipItem, hydrated, now, devFastForward, setDevFastForward } = usePauseCart()
   const total = items.reduce((sum, item) => sum + Number(item.product?.price || 0), 0)
 
   return (
@@ -20,7 +20,22 @@ export default function CartPage() {
           <h1 className="page-heading mt-3">ตะกร้าพัก<span className="ml-3 align-top text-lg text-[#9C9C9C]">{items.length.toString().padStart(2, '0')}</span></h1>
           <p className="mt-4 max-w-xl text-sm leading-7 text-[#6B6B6B] sm:text-base">สิ่งที่ชอบยังอยู่ตรงนี้ ให้เวลาตัวเองก่อนตัดสินใจ<br className="hidden sm:block" /> คุณกลับมาเลือกได้เสมอเมื่อพร้อม</p>
         </div>
-        <Link href="/products" className="button-secondary">เลือกดูสินค้าต่อ <span aria-hidden="true">↗</span></Link>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setDevFastForward((prev) => !prev)}
+            className={`inline-flex items-center gap-2 rounded-[8px] px-3.5 py-2 text-xs font-medium transition ${
+              devFastForward
+                ? 'border border-amber-300 bg-amber-100 text-amber-900 ring-2 ring-amber-300/40'
+                : 'bg-[#F3F3F5] text-[#55555E] hover:bg-[#E8E8EC]'
+            }`}
+            title="สำหรับพรีเซนต์: เร่งเวลาคิดให้เดินเร็วขึ้น 3,600 เท่า (1 วินาที = 1 ชั่วโมง)"
+          >
+            <span className={devFastForward ? 'animate-pulse' : ''}>⚡</span>
+            <span>{devFastForward ? 'กำลังเร่งเวลา (1 วิ = 1 ชม.)' : 'เร่งเวลา (Dev Mode)'}</span>
+          </button>
+          <Link href="/products" className="button-secondary">เลือกดูสินค้าต่อ <span aria-hidden="true">↗</span></Link>
+        </div>
       </div>
 
       {!hydrated ? (
@@ -68,7 +83,7 @@ export default function CartPage() {
                         <span className="inline-flex items-center gap-2 text-xs text-emerald-700"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />พร้อมให้คุณตัดสินใจแล้ว</span>
                         <Link href="/ready" className="text-xs font-medium text-[#4F46E5] hover:underline">กลับมาทบทวน <span aria-hidden="true">→</span></Link>
                       </div>
-                    ) : <Countdown readyAt={item.readyAt} onSkip={() => skipItem(item.productId, product)} isFastForward={false} />}
+                    ) : <Countdown readyAt={item.readyAt} onSkip={() => skipItem(item.productId, product)} isFastForward={devFastForward} />}
                   </div>
                 </article>
               )
