@@ -4,14 +4,20 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import CartBadge from './CartBadge'
 
-const links = [
-  { href: '/products', label: 'เลือกดูสินค้า' },
-  { href: '/ready', label: 'พร้อมตัดสินใจ' },
-  { href: '/history', label: 'บันทึกการตัดสินใจ' },
-]
+import { usePauseCart } from '@/context/PauseCartContext'
 
 export default function Nav() {
   const pathname = usePathname()
+  const { readyItems = [] } = usePauseCart() || {}
+  const readyCount = readyItems.length
+
+  const links = [
+    { href: '/products', label: '1. เลือกดูสินค้า' },
+    { href: '/cart', label: '2. ตะกร้าพักคิด' },
+    { href: '/ready', label: '3. พร้อมตัดสินใจ', badge: readyCount },
+    { href: '/history', label: 'สรุปการตัดสินใจ' },
+  ]
+
   return (
     <header className="sticky top-0 z-50 border-b border-[#E8E8EC] bg-[#FAFAFA]/95 backdrop-blur-xl">
       <div className="mx-auto flex h-[72px] max-w-[1280px] items-center justify-between gap-6 px-5 sm:px-8">
@@ -21,11 +27,16 @@ export default function Nav() {
           </span>
           <span className="font-display text-[25px] font-semibold tracking-[-.07em]">pause<span className="text-[#85858d]">.</span></span>
         </Link>
-        <nav aria-label="เมนูหลัก" className="hidden h-full items-center gap-8 md:flex">
-          {links.map(({ href, label }) => (
+        <nav aria-label="เมนูหลัก" className="hidden h-full items-center gap-7 md:flex">
+          {links.map(({ href, label, badge }) => (
             <Link key={href} href={href} aria-current={pathname.startsWith(href) ? 'page' : undefined}
-              className={'inline-flex h-full items-center border-b-2 text-[13px] font-medium transition-colors ' + (pathname.startsWith(href) ? 'border-[#6366F1] text-[#4F46E5]' : 'border-transparent text-[#6B6B6B] hover:text-[#0A0A0A]')}>
-              {label}
+              className={'inline-flex h-full items-center gap-1.5 border-b-2 text-[13px] font-medium transition-colors ' + (pathname.startsWith(href) ? 'border-[#6366F1] text-[#4F46E5]' : 'border-transparent text-[#6B6B6B] hover:text-[#0A0A0A]')}>
+              <span>{label}</span>
+              {Boolean(badge) && (
+                <span className="inline-flex size-4 items-center justify-center rounded-full bg-emerald-600 text-[9px] font-bold text-white">
+                  {badge}
+                </span>
+              )}
             </Link>
           ))}
         </nav>
@@ -34,9 +45,16 @@ export default function Nav() {
           ตะกร้าพัก <CartBadge />
         </Link>
       </div>
-      <nav aria-label="เมนูบนมือถือ" className="flex justify-center gap-6 overflow-x-auto border-t border-[#E8E8EC] px-4 md:hidden">
-        {links.map(({ href, label }) => (
-          <Link key={href} href={href} aria-current={pathname.startsWith(href) ? 'page' : undefined} className={'shrink-0 border-b-2 py-3 text-[11px] font-medium ' + (pathname.startsWith(href) ? 'border-[#6366F1] text-[#4F46E5]' : 'border-transparent text-[#6B6B6B]')}>{label}</Link>
+      <nav aria-label="เมนูบนมือถือ" className="flex justify-center gap-5 overflow-x-auto border-t border-[#E8E8EC] px-4 md:hidden">
+        {links.map(({ href, label, badge }) => (
+          <Link key={href} href={href} aria-current={pathname.startsWith(href) ? 'page' : undefined} className={'inline-flex shrink-0 items-center gap-1 border-b-2 py-3 text-[11px] font-medium ' + (pathname.startsWith(href) ? 'border-[#6366F1] text-[#4F46E5]' : 'border-transparent text-[#6B6B6B]')}>
+            <span>{label}</span>
+            {Boolean(badge) && (
+              <span className="inline-flex size-3.5 items-center justify-center rounded-full bg-emerald-600 text-[8px] font-bold text-white">
+                {badge}
+              </span>
+            )}
+          </Link>
         ))}
       </nav>
     </header>

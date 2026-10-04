@@ -79,9 +79,14 @@ export default function CartPage() {
                   </div>
                   <div className="mt-5 border-t border-[#E8E8EC] pt-4">
                     {isReady ? (
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <span className="inline-flex items-center gap-2 text-xs text-emerald-700"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />พร้อมให้คุณตัดสินใจแล้ว</span>
-                        <Link href="/ready" className="text-xs font-medium text-[#4F46E5] hover:underline">กลับมาทบทวน <span aria-hidden="true">→</span></Link>
+                      <div className="flex flex-wrap items-center justify-between gap-3 rounded-[8px] border border-emerald-200 bg-emerald-50/60 p-3.5">
+                        <span className="inline-flex items-center gap-2 text-xs font-medium text-emerald-800">
+                          <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                          {item.skipped ? 'ข้ามเวลาพักแล้ว · พร้อมตัดสินใจ' : 'ครบเวลาพักคิดแล้ว 🎉'}
+                        </span>
+                        <Link href="/ready" className="button-primary text-xs !py-1.5 !px-3 font-medium">
+                          ไปตัดสินใจ (ซื้อหรือผ่าน) <span aria-hidden="true">→</span>
+                        </Link>
                       </div>
                     ) : <Countdown readyAt={item.readyAt} onSkip={() => skipItem(item.productId, product)} isFastForward={devFastForward} />}
                   </div>
@@ -96,10 +101,12 @@ export default function CartPage() {
             <p className="mt-3 text-sm leading-7 text-[#6B6B6B]">เมื่อเวลาผ่านไป ลองถามตัวเองอีกครั้งว่า “สิ่งนี้ยังเหมาะกับชีวิตของฉันไหม?”</p>
             <dl className="my-6 space-y-4 border-y border-[#E8E8EC] py-5 text-sm">
               <div className="flex justify-between"><dt className="text-[#6B6B6B]">เก็บไว้ทั้งหมด</dt><dd>{items.length} รายการ</dd></div>
-              <div className="flex justify-between"><dt className="text-[#6B6B6B]">พร้อมตัดสินใจ</dt><dd>{readyItems.length} รายการ</dd></div>
+              <div className="flex justify-between"><dt className="text-[#6B6B6B]">พร้อมตัดสินใจ</dt><dd className="font-semibold text-emerald-700">{readyItems.length} รายการ</dd></div>
               <div className="flex justify-between"><dt className="text-[#6B6B6B]">มูลค่าสินค้า</dt><dd className="font-medium">{formatPrice(total)}</dd></div>
             </dl>
-            <Link href="/ready" className="button-primary w-full">รายการพร้อมตัดสินใจ <span aria-hidden="true">→</span></Link>
+            <Link href="/ready" className="button-primary w-full text-center">
+              {readyItems.length > 0 ? `ไปหน้าตัดสินใจ (${readyItems.length} ชิ้นพร้อมแล้ว) →` : 'ดูรายการที่พร้อมตัดสินใจ →'}
+            </Link>
             <p className="mt-4 text-center text-xs leading-5 text-[#6B6B6B]">ตะกร้านี้ยังไม่ใช่คำสั่งซื้อ</p>
           </aside>
         </div>

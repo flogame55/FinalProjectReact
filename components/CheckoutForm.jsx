@@ -126,8 +126,8 @@ export default function CheckoutForm({ item, onConfirm, onCancel, checkoutAvaila
         <div className="flex items-end justify-between gap-3 py-5"><span className="text-sm font-medium">ยอดสินค้า</span><span className="text-2xl font-semibold tracking-tight tabular-nums">{formatPrice(product?.price)}</span></div>
         <p className="mb-5 text-[11px] leading-5 text-[#777780]">ยอดนี้ยังไม่รวมค่าจัดส่ง และยังไม่ใช่ยอดเรียกเก็บจริง</p>
         {submitError && <p role="alert" className="mb-4 text-sm leading-6 text-red-600">{submitError}</p>}
-        <button type="submit" disabled={!checkoutAvailable || !onConfirm || isSubmitting} aria-describedby={!checkoutAvailable ? `${formId}-unavailable` : undefined} className="button-primary w-full">{isSubmitting ? 'กำลังยืนยัน…' : checkoutAvailable ? 'ยืนยันรายการ' : 'ยังไม่เปิดรับคำสั่งซื้อ'}</button>
-        <button type="button" onClick={onCancel} disabled={isSubmitting} className="button-quiet mt-2 w-full">กลับไปทบทวนอีกครั้ง</button>
+        <button type="submit" disabled={!checkoutAvailable || !onConfirm || isSubmitting} aria-describedby={!checkoutAvailable ? `${formId}-unavailable` : undefined} className="button-primary w-full">{isSubmitting ? 'กำลังบันทึกคำสั่งซื้อ…' : checkoutAvailable ? 'ยืนยันคำสั่งซื้อ (มั่นใจแล้ว) 🛍️' : 'ยังไม่เปิดรับคำสั่งซื้อ'}</button>
+        <button type="button" onClick={onCancel} disabled={isSubmitting} className="button-quiet mt-2 w-full">ยกเลิก · กลับไปคิดอีกครั้ง</button>
         <p className="mt-4 text-center text-[10px] leading-5 text-[#85858d]">คุณยังเปลี่ยนใจได้ก่อนยืนยันรายการ</p>
       </aside>
     </form>
