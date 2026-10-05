@@ -15,24 +15,34 @@ export default function ReadyPage() {
   const [selectedForCheckout, setSelectedForCheckout] = useState(null)
   const [notice, setNotice] = useState('')
   const [decisionResult, setDecisionResult] = useState(null)
+  const [passingId, setPassingId] = useState(null)
 
   async function handlePass(item) {
-    removeItem(item.productId)
-    const res = await passItemAction({
-      sessionId,
-      productId: item.productId,
-      price: item.product?.price || 0,
-      skipped: item.skipped,
-    })
-    if (res?.ok) {
-      setDecisionResult({
-        type: 'PASSED',
-        productName: item.product?.name || `สินค้า #${item.productId}`,
+    if (passingId) return
+    setNotice('')
+    setPassingId(item.productId)
+    let res
+    try {
+      res = await passItemAction({
+        sessionId,
+        productId: item.productId,
         price: item.product?.price || 0,
+        skipped: item.skipped,
       })
-    } else {
-      setNotice('นำสินค้าออกจากตะกร้าพักแล้ว')
+    } catch {
+      res = { ok: false }
     }
+    setPassingId(null)
+    if (!res?.ok) {
+      setNotice(res?.error || 'บันทึกการตัดสินใจไม่สำเร็จ กรุณาลองอีกครั้ง')
+      return
+    }
+    removeItem(item.productId)
+    setDecisionResult({
+      type: 'PASSED',
+      productName: item.product?.name || `สินค้า #${item.productId}`,
+      price: item.product?.price || 0,
+    })
   }
 
   async function handleConfirm(formData) {
@@ -72,10 +82,10 @@ export default function ReadyPage() {
         <Link href="/cart" className="button-secondary"><span aria-hidden="true">←</span> {selectedForCheckout ? 'แก้ไขในตะกร้าพัก' : 'กลับไปตะกร้าพัก'}</Link>
       </div>
 
-      {notice && <p role="status" className="rounded-[12px] border border-emerald-100 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">{notice}</p>}
+      {notice && <p role="alert" className="rounded-[12px] border border-red-100 bg-red-50 px-5 py-4 text-sm leading-6 text-red-700">{notice}</p>}
 
       {decisionResult && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="decision-result-heading">
           <div className="surface w-full max-w-md rounded-[12px] border border-[#E8E8EC] p-6 text-center shadow-xl sm:p-8">
             <div className={`mx-auto mb-5 flex size-14 items-center justify-center rounded-full ${decisionResult.type === 'PASSED' ? 'bg-emerald-50 text-emerald-600' : 'bg-indigo-50 text-[#6366F1]'}`}>
               {decisionResult.type === 'PASSED' ? (
@@ -89,7 +99,7 @@ export default function ReadyPage() {
               {decisionResult.type === 'PASSED' ? 'SAVED · ตัดสินใจอย่างมีสติ' : 'CONFIRMED · สั่งซื้อสำเร็จ'}
             </p>
 
-            <h2 className="mt-2 text-2xl font-bold tracking-tight text-[#0A0A0A]">
+            <h2 id="decision-result-heading" className="mt-2 text-2xl font-bold tracking-tight text-[#0A0A0A]">
               {decisionResult.type === 'PASSED'
                 ? `ยินดีด้วย! คุณประหยัดเงินไปได้ ${formatPrice(decisionResult.price)}`
                 : 'สั่งซื้อสำเร็จ! บันทึกลงในสถิติแล้ว'}
@@ -184,9 +194,10 @@ export default function ReadyPage() {
                     <button
                       type="button"
                       onClick={() => handlePass(item)}
+                      disabled={Boolean(passingId)}
                       className="button-secondary flex-1 text-xs sm:text-sm border-emerald-200 bg-emerald-50/50 text-emerald-800 hover:bg-emerald-100/70"
                     >
-                      เปลี่ยนใจแล้ว · ไม่ซื้อ (ประหยัดเงิน) 💚
+                      {passingId === item.productId ? 'กำลังบันทึก…' : 'เปลี่ยนใจแล้ว · ไม่ซื้อ (ประหยัดเงิน) 💚'}
                     </button>
                   </div>
                 </article>

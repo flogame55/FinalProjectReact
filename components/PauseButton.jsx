@@ -89,7 +89,7 @@ export default function PauseButton({ productId, product }) {
       <div className="space-y-2.5 border-t border-[#E8E8EC] pt-5">
         <button type="button" disabled={!hydrated || !validHours} onClick={handlePause} className="button-primary w-full">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M8 5v14M16 5v14" /></svg>
-          พักคิดก่อน ({hours} ชม.)
+          พักคิดก่อน{validHours && ` (${hours} ชม.)`}
         </button>
         <button type="button" disabled={!hydrated} onClick={handleSkip} className="button-quiet w-full text-xs text-[#6B6B6B] hover:text-[#0A0A0A]">ไม่อยากรอ · ข้ามไปตัดสินใจซื้อทันที ⚡</button>
       </div>

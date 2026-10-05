@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getProductById, getProducts } from '@/lib/products'
@@ -7,9 +8,19 @@ import PauseButton from '@/components/PauseButton'
 import ProductGallery from '@/components/ProductGallery'
 import ProductCard from '@/components/ProductCard'
 
+// generateMetadata และหน้าเพจใช้สินค้าตัวเดียวกัน — cache ไว้เพื่อ query ฐานข้อมูลครั้งเดียวต่อ request
+const getProduct = cache(getProductById)
+
+export async function generateMetadata({ params }) {
+  const { id } = await params
+  const product = await getProduct(id)
+  if (!product) return { title: 'ไม่พบสินค้า' }
+  return { title: product.name, description: product.description?.slice(0, 160) || undefined }
+}
+
 export default async function ProductDetailPage({ params }) {
   const { id } = await params
-  const product = await getProductById(id)
+  const product = await getProduct(id)
   if (!product) notFound()
 
   const relatedProducts = (await getProducts({ category: product.category, limit: 6 })).filter((item) => item.id !== product.id).slice(0, 4)

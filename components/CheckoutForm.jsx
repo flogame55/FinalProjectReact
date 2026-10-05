@@ -4,17 +4,8 @@ import { useId, useState } from 'react'
 import Image from 'next/image'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { checkoutSchema } from '@/lib/schemas/checkout'
 import ExchangeRateCaption from '@/components/ExchangeRateCaption'
-
-// Extend the current shared schema until the checkout backend is implemented.
-const formSchema = checkoutSchema.extend({
-  fullName: z.string().trim().min(2, 'กรุณากรอกชื่อและนามสกุลอย่างน้อย 2 ตัวอักษร'),
-  address: z.string().trim().min(10, 'กรุณากรอกที่อยู่จัดส่งให้ครบถ้วน อย่างน้อย 10 ตัวอักษร'),
-  phone: z.string().trim().regex(/^[0-9]{9,10}$/, 'กรุณากรอกเบอร์โทรศัพท์ 9–10 หลัก'),
-  paymentMethod: z.enum(['promptpay', 'credit_card', 'cod']),
-})
 
 const formatPrice = (value) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 2 }).format(Number(value) || 0)
 
@@ -23,7 +14,7 @@ export default function CheckoutForm({ item, onConfirm, onCancel, checkoutAvaila
   const [submitError, setSubmitError] = useState('')
   const product = item.product
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(checkoutSchema),
     mode: 'onTouched',
     defaultValues: { fullName: '', address: '', phone: '', paymentMethod: 'promptpay' },
   })
