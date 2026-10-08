@@ -5,7 +5,6 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { usePauseCart } from '@/context/PauseCartContext'
 import CheckoutForm from '@/components/CheckoutForm'
-import ExchangeRateCaption from '@/components/ExchangeRateCaption'
 import { confirmPurchaseAction, passItemAction } from '@/app/actions'
 
 const formatPrice = (value) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 2 }).format(Number(value) || 0)
@@ -174,7 +173,6 @@ export default function ReadyPage() {
                       </span>
                       <h2 className="mt-2 text-base font-medium leading-6"><Link href={`/products/${item.productId}`} className="hover:text-[#6366F1]">{product?.name || `สินค้า #${item.productId}`}</Link></h2>
                       <p className="mt-3 font-medium">{product ? formatPrice(product.price) : 'ดูราคาที่หน้าสินค้า'}</p>
-                      <ExchangeRateCaption product={product} className="mt-1 text-[10px] text-[#85858d]" />
                     </div>
                   </div>
                   <div className="mt-5 flex flex-col gap-3 border-t border-[#E8E8EC] pt-5 sm:flex-row">

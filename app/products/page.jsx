@@ -12,16 +12,15 @@ export default async function ProductsPage({ searchParams }) {
   const q = typeof resolvedParams?.q === 'string' ? resolvedParams.q : ''
   const category = typeof resolvedParams?.category === 'string' ? resolvedParams.category : ''
   const sort = typeof resolvedParams?.sort === 'string' ? resolvedParams.sort : ''
+  const requestedPage = Math.max(1, Math.floor(Number(resolvedParams?.page) || 1))
 
-  const [products, categories] = await Promise.all([getProducts({ q, category }), getProductCategories()])
-  const sortedProducts = [...products]
-  if (sort === 'price-asc') sortedProducts.sort((a, b) => a.price - b.price)
-  if (sort === 'price-desc') sortedProducts.sort((a, b) => b.price - a.price)
-  if (sort === 'name') sortedProducts.sort((a, b) => a.name.localeCompare(b.name, 'th'))
-  const totalPages = Math.max(1, Math.ceil(sortedProducts.length / PAGE_SIZE))
-  const requestedPage = Number(resolvedParams?.page) || 1
-  const page = Math.min(totalPages, Math.max(1, Math.floor(requestedPage)))
-  const visibleProducts = sortedProducts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const [{ products: visibleProducts, total }, categories] = await Promise.all([
+    getProducts({ q, category, sort, page: requestedPage, pageSize: PAGE_SIZE }),
+    getProductCategories(),
+  ])
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
+  const page = Math.min(totalPages, requestedPage)
 
   function pageHref(nextPage) {
     const params = new URLSearchParams()
@@ -47,8 +46,8 @@ export default async function ProductsPage({ searchParams }) {
       <section aria-label="แคตตาล็อกสินค้า" className="space-y-6">
         <SearchFilter categories={categories} />
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p role="status" className="text-sm text-[#6B6B6B]"><span className="font-medium text-[#20211F]">{q ? `ผลการค้นหา “${q}”` : category ? getCategoryLabel(category) : 'สินค้าทั้งหมด'}</span><span className="mx-2.5 text-[#C7C8C1]">/</span>{products.length.toLocaleString('th-TH')} รายการ</p>
-          {products.length > 0 && <p className="text-xs text-[#77796F]">แสดง {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, products.length)}</p>}
+          <p role="status" className="text-sm text-[#6B6B6B]"><span className="font-medium text-[#20211F]">{q ? `ผลการค้นหา “${q}”` : category ? getCategoryLabel(category) : 'สินค้าทั้งหมด'}</span><span className="mx-2.5 text-[#C7C8C1]">/</span>{total.toLocaleString('th-TH')} รายการ</p>
+          {total > 0 && <p className="text-xs text-[#77796F]">แสดง {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)}</p>}
         </div>
         {visibleProducts.length > 0 ? (
           <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">

@@ -2,7 +2,6 @@ import Image from 'next/image'
 import Link from 'next/link'
 import ProductCard from '@/components/ProductCard'
 import ParallaxLayer from '@/components/ParallaxLayer'
-import ExchangeRateCaption from '@/components/ExchangeRateCaption'
 import { getProducts } from '@/lib/products'
 import { formatPrice, getCategoryLabel } from '@/lib/presentation'
 
@@ -57,7 +56,7 @@ export default async function HomePage() {
               </ParallaxLayer>
             </div>
             <div className="flex items-center justify-between gap-4 rounded-[8px] bg-white/90 p-4 sm:p-5">
-              <div className="min-w-0"><p className="eyebrow">{getCategoryLabel(heroProduct.category)}</p><h2 className="mt-1 truncate text-sm font-medium">{heroProduct.name}</h2><p className="mt-1 text-xs text-[#6B6B6B]">{formatPrice(heroProduct.price)}</p><ExchangeRateCaption product={heroProduct} className="mt-1 text-[9px] leading-4 text-[#85858d]" /></div>
+              <div className="min-w-0"><p className="eyebrow">{getCategoryLabel(heroProduct.category)}</p><h2 className="mt-1 truncate text-sm font-medium">{heroProduct.name}</h2><p className="mt-1 text-xs text-[#6B6B6B]">{formatPrice(heroProduct.price)}</p></div>
               <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-full border border-[#E8E8EC] bg-white text-lg transition group-hover:border-[#6366F1] group-hover:text-[#6366F1]">↗</span>
             </div>
           </Link>

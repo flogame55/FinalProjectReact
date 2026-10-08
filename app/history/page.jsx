@@ -45,8 +45,9 @@ export default async function HistoryPage() {
   const skippedCount = logs.filter((log) => log.skipped).length
   const decisionCount = boughtLogs.length + passedLogs.length
   const chartData = [
-    { name: 'เลือกซื้อ', count: boughtLogs.length },
-    { name: 'เปลี่ยนใจ', count: passedLogs.length },
+    { name: 'ซื้อจริง', count: boughtLogs.length, color: '#10B981' },
+    { name: 'เปลี่ยนใจ', count: passedLogs.length, color: '#6366F1' },
+    { name: 'ข้ามเวลา', count: skippedCount, color: '#EF4444' },
   ]
 
   return (

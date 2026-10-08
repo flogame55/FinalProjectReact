@@ -5,7 +5,6 @@ import Image from 'next/image'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { checkoutSchema } from '@/lib/schemas/checkout'
-import ExchangeRateCaption from '@/components/ExchangeRateCaption'
 
 const formatPrice = (value) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 2 }).format(Number(value) || 0)
 
@@ -60,7 +59,7 @@ export default function CheckoutForm({ item, onConfirm, onCancel, checkoutAvaila
               <h3 className="mt-3 text-lg font-medium leading-7 text-[#20211F] sm:text-xl">{product?.name || `สินค้า #${item.productId}`}</h3>
               <p className="mt-1 text-xs text-[#777780]">จำนวน 1 ชิ้น</p>
               <div className="mt-5 border-t border-[#E8E8EC] pt-4 sm:flex sm:items-end sm:justify-between sm:gap-4">
-                <div><p className="text-xs text-[#777780]">ราคาสินค้า</p><p className="mt-1 text-2xl font-semibold tracking-tight text-[#20211F]">{formatPrice(product?.price)}</p><ExchangeRateCaption product={product} className="mt-1 text-[10px] text-[#85858d]" /></div>
+                <div><p className="text-xs text-[#777780]">ราคาสินค้า</p><p className="mt-1 text-2xl font-semibold tracking-tight text-[#20211F]">{formatPrice(product?.price)}</p></div>
                 <p className="mt-4 text-[11px] text-[#777780] sm:mt-0">ค่าส่งคำนวณในขั้นตอนถัดไป</p>
               </div>
             </div>

@@ -1,7 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { formatPrice, getCategoryLabel } from '@/lib/presentation'
-import ExchangeRateCaption from '@/components/ExchangeRateCaption'
 
 export default function ProductCard({ product, priority = false }) {
   if (!product) return null
@@ -29,7 +28,7 @@ export default function ProductCard({ product, priority = false }) {
         </h2>
         {brand && <p className="mt-1 truncate text-[11px] text-[#797A75]">{brand}</p>}
         <div className="mt-auto flex items-end justify-between gap-2 pt-4">
-          <div><p className="text-base font-semibold tracking-tight text-[#20211F] sm:text-lg">{formatPrice(price)}</p><ExchangeRateCaption product={product} className="mt-1 text-[9px] leading-4 text-[#85858d] sm:text-[10px]" /></div>
+          <div><p className="text-base font-semibold tracking-tight text-[#20211F] sm:text-lg">{formatPrice(price)}</p></div>
           <span className="hidden pb-0.5 text-[10px] text-[#797A75] sm:inline">ค่อย ๆ เลือกได้</span>
         </div>
       </div>
