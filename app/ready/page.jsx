@@ -6,8 +6,7 @@ import Link from 'next/link'
 import { usePauseCart } from '@/context/PauseCartContext'
 import CheckoutForm from '@/components/CheckoutForm'
 import { confirmPurchaseAction, passItemAction } from '@/app/actions'
-
-const formatPrice = (value) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 2 }).format(Number(value) || 0)
+import { formatPrice } from '@/lib/presentation'
 
 export default function ReadyPage() {
   const { readyItems, removeItem, hydrated, sessionId } = usePauseCart()

@@ -2,10 +2,9 @@ import Link from 'next/link'
 import { cookies } from 'next/headers'
 import { supabase } from '@/lib/supabase'
 import HistoryChart from '@/components/HistoryChart'
+import { formatPrice } from '@/lib/presentation'
 
 export const dynamic = 'force-dynamic'
-
-const money = (amount) => `฿${amount.toLocaleString('th-TH', { maximumFractionDigits: 2 })}`
 const dateFormatter = new Intl.DateTimeFormat('th-TH', {
   day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Bangkok',
 })
@@ -76,8 +75,8 @@ export default async function HistoryPage() {
       ) : null}
 
       <div className="grid gap-4 md:grid-cols-3">
-        <MetricCard number="01" label="เงินที่ยังอยู่กับคุณ" value={loadFailed ? '—' : money(totalSaved)} detail="มูลค่ารายการที่คุณเลือกเปลี่ยนใจ" positive />
-        <MetricCard number="02" label="ยอดที่เลือกซื้อ" value={loadFailed ? '—' : money(totalSpent)} detail="มูลค่ารายการที่คุณตัดสินใจซื้อ" />
+        <MetricCard number="01" label="เงินที่ยังอยู่กับคุณ" value={loadFailed ? '—' : formatPrice(totalSaved)} detail="มูลค่ารายการที่คุณเลือกเปลี่ยนใจ" positive />
+        <MetricCard number="02" label="ยอดที่เลือกซื้อ" value={loadFailed ? '—' : formatPrice(totalSpent)} detail="มูลค่ารายการที่คุณตัดสินใจซื้อ" />
         <MetricCard number="03" label="ข้ามช่วงพักคิด" value={loadFailed ? '—' : skippedCount.toLocaleString('th-TH')} unit={loadFailed ? undefined : 'รายการ'} detail="นับรวมอยู่ในรายการซื้อและเปลี่ยนใจแล้ว" />
       </div>
 
@@ -130,7 +129,7 @@ export default async function HistoryPage() {
                       <tr key={`${log.timestamp}-${index}`}>
                         <td className="px-6 py-5 text-[#6B6B6B] sm:pl-8">{Number.isNaN(date.getTime()) ? '—' : dateFormatter.format(date)}</td>
                         <td className="px-4 py-5"><span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs ${passed ? 'bg-[#EDF7F1] text-[#246344]' : 'bg-[#F3F3F5] text-[#4B4B4B]'}`}><span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${passed ? 'bg-[#3A805A]' : 'bg-[#737373]'}`} />{passed ? 'เปลี่ยนใจ' : log.decisionStatus === 'BOUGHT' ? 'เลือกซื้อ' : 'ยังไม่ระบุ'}</span></td>
-                        <td className="px-4 py-5 text-right font-medium tabular-nums">{money(priceOf(log))}</td>
+                        <td className="px-4 py-5 text-right font-medium tabular-nums">{formatPrice(priceOf(log))}</td>
                         <td className="px-6 py-5 text-right text-xs text-[#6B6B6B] sm:pr-8">{log.skipped ? 'ข้ามเวลารอ' : 'พักครบเวลา'}</td>
                       </tr>
                     )

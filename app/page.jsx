@@ -17,14 +17,7 @@ export default async function HomePage() {
     if (chosenCategories.length >= 4) break
     if (!chosenCategories.includes(category)) chosenCategories.push(category)
   }
-  const featured = [...products]
-  for (let index = featured.length - 1; index > 0; index -= 1) {
-    const randomIndex = Math.floor(Math.random() * (index + 1))
-    const currentProduct = featured[index]
-    featured[index] = featured[randomIndex]
-    featured[randomIndex] = currentProduct
-  }
-  featured.length = Math.min(4, featured.length)
+  const featured = [...products].sort(() => 0.5 - Math.random()).slice(0, 4)
 
   return (
     <div className="space-y-16 sm:space-y-24">

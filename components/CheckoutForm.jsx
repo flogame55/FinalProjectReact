@@ -5,8 +5,7 @@ import Image from 'next/image'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { checkoutSchema } from '@/lib/schemas/checkout'
-
-const formatPrice = (value) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 2 }).format(Number(value) || 0)
+import { formatPrice } from '@/lib/presentation'
 
 export default function CheckoutForm({ item, onConfirm, onCancel, checkoutAvailable = false }) {
   const formId = useId()

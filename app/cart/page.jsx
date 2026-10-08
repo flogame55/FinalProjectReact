@@ -4,9 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { usePauseCart } from '@/context/PauseCartContext'
 import Countdown from '@/components/Countdown'
-import ExchangeRateCaption from '@/components/ExchangeRateCaption'
-
-const formatPrice = (value) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 2 }).format(Number(value) || 0)
+import { formatPrice } from '@/lib/presentation'
 
 export default function CartPage() {
   const { items, readyItems, removeItem, skipItem, hydrated, now, devFastForward, setDevFastForward } = usePauseCart()
@@ -73,7 +71,6 @@ export default function CartPage() {
                         </button>
                       </div>
                       <p className="mt-2 text-base font-medium">{product ? formatPrice(product.price) : 'ดูราคาที่หน้าสินค้า'}</p>
-                      <ExchangeRateCaption product={product} className="mt-1 text-[10px] text-[#85858d]" />
                       <p className="mt-3 text-xs text-[#6B6B6B]">เริ่มพัก {new Date(item.addedAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}</p>
                     </div>
                   </div>
