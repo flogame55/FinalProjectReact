@@ -1,5 +1,12 @@
 'use client'
 
+// ============================================================================
+// 📌 Client Component: app/ready/page.jsx (Decision Gate)
+// - เหตุผลที่เป็น Client Component: จัดการ State การตัดสินใจที่ซับซ้อนของผู้ใช้
+//   (เลือกซื้อเปิด CheckoutForm, เลือกผ่านคำนวณเงินที่ประหยัดได้, ลบสินค้าออกจาก cart context)
+//   และทำหน้าที่ประสานงานส่งข้อมูลไปยัง Server Actions (confirmPurchaseAction, passItemAction)
+// ============================================================================
+
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'

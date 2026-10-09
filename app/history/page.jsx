@@ -1,3 +1,11 @@
+// ============================================================================
+// 📌 Server Component: app/history/page.jsx (Decision Insights & Dashboard)
+// - เหตุผลที่เป็น Server Component: อ่าน pause-session-id จาก Cookie บน Server Headers
+//   และดึงข้อมูล DecisionLog ตรงจาก Supabase Database อย่างปลอดภัย
+//   ไม่เปิดเผย Database Connection Key หรือ query logic สู่ Client
+// - Data Fetching: SSR (force-dynamic) เพื่อแสดงผลสถิติที่สดใหม่ทันทีหลังผู้ใช้ตัดสินใจ
+// ============================================================================
+
 import Link from 'next/link'
 import { cookies } from 'next/headers'
 import { supabase } from '@/lib/supabase'

@@ -1,5 +1,12 @@
 'use client'
 
+// ============================================================================
+// 📌 Client Component: app/cart/page.jsx (Cart & Cooling-off Space)
+// - เหตุผลที่เป็น Client Component: ต้องเข้าถึง Web Browser Storage (localStorage)
+//   เพื่ออ่าน/เขียนตะกร้าสินค้าของผู้ใช้คนนั้น และเชื่อมต่อกับ React Context (usePauseCart)
+//   รวมถึงควบคุมสวิตช์ toggle เร่งเวลา devFastForward แบบ Interactive
+// ============================================================================
+
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePauseCart } from '@/context/PauseCartContext'

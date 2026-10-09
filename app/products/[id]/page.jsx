@@ -1,3 +1,11 @@
+// ============================================================================
+// 📌 Server Component: app/products/[id]/page.jsx (Product Detail Page)
+// - เหตุผลที่เป็น Server Component: ดึงข้อมูลสินค้าเฉพาะรายการตาม Dynamic Route (params.id)
+//   พร้อมทั้งทำ generateMetadata สำหรับ SEO / Social Share พรีวิวรูปและคำอธิบาย
+// - Data Fetching: SSG (Static Site Generation ผ่าน generateStaticParams) สร้าง HTML รอไว้ล่วงหน้า
+//   ร่วมกับ ISR/SSR on-demand เมื่อมีคำขอเข้าชม ID อื่น
+// ============================================================================
+
 import { cache } from 'react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -9,6 +17,12 @@ import ProductCard from '@/components/ProductCard'
 
 // generateMetadata และหน้าเพจใช้สินค้าตัวเดียวกัน — cache ไว้เพื่อ query ฐานข้อมูลครั้งเดียวต่อ request
 const getProduct = cache(getProductById)
+
+export async function generateStaticParams() {
+  const items = await getProducts({ limit: 24 })
+  const list = Array.isArray(items) ? items : items?.products || []
+  return list.map((product) => ({ id: String(product.id) }))
+}
 
 export async function generateMetadata({ params }) {
   const { id } = await params

@@ -1,3 +1,10 @@
+// ============================================================================
+// 📌 Server Component: app/page.jsx (Landing Page)
+// - เหตุผลที่เป็น Server Component: ดึงรายการสินค้าแนะนำฝั่งเซิร์ฟเวอร์โดยตรง
+//   ช่วยให้ได้ SEO ที่ดี ลด JavaScript bundle size ที่ต้องส่งไป client
+// - Data Fetching: SSR (force-dynamic) เพื่อแสดงผลสินค้าตัวอย่างสดใหม่เสมอ
+// ============================================================================
+
 import Image from 'next/image'
 import Link from 'next/link'
 import ProductCard from '@/components/ProductCard'
