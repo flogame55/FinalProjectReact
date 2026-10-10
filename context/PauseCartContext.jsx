@@ -1,41 +1,18 @@
 'use client'
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { convertUsdToThb } from '@/lib/pricing'
 
 const STORAGE_KEY = 'pause-cart'
 const SESSION_KEY = 'pause-session-id'
 const PauseCartContext = createContext(null)
 
-function readItems(value, exchangeRate) {
+function readItems(value) {
   try {
     const parsed = JSON.parse(value || '[]')
     return Array.isArray(parsed) ? parsed.filter((item) =>
       Number.isInteger(item?.productId) && item.productId > 0
       && Number.isFinite(item.addedAt) && Number.isFinite(item.readyAt),
-    ).map((item) => {
-      const product = item.product
-      const isDummyJsonProduct = product?.imageUrl?.includes('cdn.dummyjson.com')
-      if (!isDummyJsonProduct) return item
-
-      const hasUsdSnapshot = Number.isFinite(product.priceUsd) && Number.isFinite(product.usdToThbRate)
-      const priceUsd = hasUsdSnapshot ? product.priceUsd : Number(product.price)
-      const rate = hasUsdSnapshot ? product.usdToThbRate : exchangeRate?.rate
-      if (!Number.isFinite(priceUsd) || !Number.isFinite(rate)) return item
-
-      const price = convertUsdToThb(priceUsd, rate)
-      return {
-        ...item,
-        product: {
-          ...product,
-          price,
-          priceUsd,
-          usdToThbRate: rate,
-          exchangeRateDate: hasUsdSnapshot ? product.exchangeRateDate : exchangeRate?.date,
-          exchangeRateSource: hasUsdSnapshot ? product.exchangeRateSource : exchangeRate?.source,
-        },
-      }
-    }) : []
+    ) : []
   } catch {
     return []
   }
@@ -56,10 +33,7 @@ function productSnapshot(product) {
   }
 }
 
-export function PauseCartProvider({ children, exchangeRate }) {
-  const exchangeRateRate = exchangeRate?.rate
-  const exchangeRateDate = exchangeRate?.date
-  const exchangeRateSource = exchangeRate?.source
+export function PauseCartProvider({ children }) {
   const [items, setItems] = useState([])
   const [sessionId, setSessionId] = useState('')
   const [hydrated, setHydrated] = useState(false)
@@ -68,9 +42,8 @@ export function PauseCartProvider({ children, exchangeRate }) {
 
   useEffect(() => {
     let sid = ''
-    const currentExchangeRate = { rate: exchangeRateRate, date: exchangeRateDate, source: exchangeRateSource }
     try {
-      setItems(readItems(localStorage.getItem(STORAGE_KEY), currentExchangeRate))
+      setItems(readItems(localStorage.getItem(STORAGE_KEY)))
       sid = localStorage.getItem(SESSION_KEY) || crypto.randomUUID()
       localStorage.setItem(SESSION_KEY, sid)
     } catch {
@@ -81,11 +54,11 @@ export function PauseCartProvider({ children, exchangeRate }) {
     setNow(Date.now())
     setHydrated(true)
     const syncStorage = (event) => {
-      if (event.key === STORAGE_KEY) setItems(readItems(event.newValue, currentExchangeRate))
+      if (event.key === STORAGE_KEY) setItems(readItems(event.newValue))
     }
     window.addEventListener('storage', syncStorage)
     return () => window.removeEventListener('storage', syncStorage)
-  }, [exchangeRateRate, exchangeRateDate, exchangeRateSource])
+  }, [])
 
   useEffect(() => {
     if (!hydrated) return

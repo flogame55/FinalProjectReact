@@ -2,21 +2,18 @@ import './globals.css'
 import Link from 'next/link'
 import Nav from '@/components/Nav'
 import { PauseCartProvider } from '@/context/PauseCartContext'
-import { getUsdToThbRate } from '@/lib/currency'
 
 export const metadata = {
   title: { default: 'Pause — เลือกอย่างตั้งใจ', template: '%s · Pause' },
   description: 'ค้นพบของที่ชอบ ให้เวลากับตัวเอง แล้วเลือกสิ่งที่ต้องการจริง ๆ ด้วยตะกร้าพักของ Pause',
 }
 
-export default async function RootLayout({ children }) {
-  const exchangeRate = await getUsdToThbRate()
-
+export default function RootLayout({ children }) {
   return (
     <html lang="th" data-scroll-behavior="smooth">
       <body className="flex min-h-screen flex-col antialiased">
         <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-white focus:p-3">ข้ามไปเนื้อหาหลัก</a>
-        <PauseCartProvider exchangeRate={exchangeRate}>
+        <PauseCartProvider>
           <Nav />
           <main id="main-content" className="page-enter mx-auto w-full max-w-[1280px] flex-1 px-5 py-8 sm:px-8 sm:py-12">{children}</main>
           <footer className="mt-12 border-t border-[#E8E8EC] bg-white">
