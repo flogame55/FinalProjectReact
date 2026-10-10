@@ -92,7 +92,7 @@ export default function CartPage() {
                           ไปตัดสินใจ (ซื้อหรือผ่าน) <span aria-hidden="true">→</span>
                         </Link>
                       </div>
-                    ) : <Countdown readyAt={item.readyAt} onSkip={() => skipItem(item.productId, product)} isFastForward={devFastForward} />}
+                    ) : <Countdown startedAt={item.addedAt} readyAt={item.readyAt} durationMs={item.durationMs} onSkip={() => skipItem(item.productId, product)} isFastForward={devFastForward} />}
                   </div>
                 </article>
               )

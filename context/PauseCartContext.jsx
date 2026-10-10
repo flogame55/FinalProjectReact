@@ -85,9 +85,10 @@ export function PauseCartProvider({ children }) {
     const hours = Number(durationHours)
     if (!Number.isInteger(productId) || productId < 1 || !Number.isFinite(hours) || hours < 1 || hours > 168) return
     const timestamp = Date.now()
+    const durationMs = hours * 3600000
     setNow(timestamp)
     setItems((previous) => previous.some((item) => item.productId === productId) ? previous : [
-      ...previous, { productId, addedAt: timestamp, readyAt: timestamp + hours * 3600000, skipped: false, product: productSnapshot(product) },
+      ...previous, { productId, addedAt: timestamp, readyAt: timestamp + durationMs, durationMs, skipped: false, product: productSnapshot(product) },
     ])
   }, [])
 
@@ -100,7 +101,7 @@ export function PauseCartProvider({ children }) {
     setNow(timestamp)
     setItems((previous) => previous.some((item) => item.productId === productId)
       ? previous.map((item) => item.productId === productId ? { ...item, readyAt: timestamp, skipped: true } : item)
-      : [...previous, { productId, addedAt: timestamp, readyAt: timestamp, skipped: true, product: productSnapshot(product) }])
+      : [...previous, { productId, addedAt: timestamp, readyAt: timestamp, durationMs: 0, skipped: true, product: productSnapshot(product) }])
   }, [])
 
   const has = useCallback((id) => items.some((item) => item.productId === Number(id)), [items])
