@@ -10,12 +10,15 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { usePauseCart } from '@/context/PauseCartContext'
 import CheckoutForm from '@/components/CheckoutForm'
 import { confirmPurchaseAction, passItemAction } from '@/app/actions'
 import { formatPrice } from '@/lib/presentation'
+import UiIcon from '@/components/UiIcon'
 
 export default function ReadyPage() {
+  const router = useRouter()
   const { readyItems, removeItem, hydrated, sessionId } = usePauseCart()
   const [selectedForCheckout, setSelectedForCheckout] = useState(null)
   const [notice, setNotice] = useState('')
@@ -62,12 +65,8 @@ export default function ReadyPage() {
     })
     if (res?.ok) {
       removeItem(currentItem.productId)
-      setSelectedForCheckout(null)
-      setDecisionResult({
-        type: 'BOUGHT',
-        productName: currentItem.product?.name || `สินค้า #${currentItem.productId}`,
-        price: currentItem.product?.price || 0,
-      })
+      const params = new URLSearchParams({ productId: String(currentItem.productId), method: formData.paymentMethod })
+      router.push(`/payment/success?${params.toString()}`)
     }
     return res
   }
@@ -188,7 +187,7 @@ export default function ReadyPage() {
                         onClick={() => { setNotice(''); setSelectedForCheckout(item) }}
                         className="button-primary flex-1 text-xs sm:text-sm"
                       >
-                        ยังอยากได้ · ดำเนินการสั่งซื้อ 🛍️
+                        ยังอยากได้ · ดำเนินการสั่งซื้อ
                       </button>
                     ) : (
                       <Link href={`/products/${item.productId}`} className="button-primary flex-1 text-xs sm:text-sm">
@@ -201,7 +200,7 @@ export default function ReadyPage() {
                       disabled={Boolean(passingId)}
                       className="button-secondary flex-1 text-xs sm:text-sm border-emerald-200 bg-emerald-50/50 text-emerald-800 hover:bg-emerald-100/70"
                     >
-                      {passingId === item.productId ? 'กำลังบันทึก…' : 'เปลี่ยนใจแล้ว · ไม่ซื้อ (ประหยัดเงิน) 💚'}
+                      {passingId === item.productId ? 'กำลังบันทึก…' : 'เปลี่ยนใจแล้ว · ไม่ซื้อ (ประหยัดเงิน)  '}
                     </button>
                   </div>
                 </article>
@@ -239,7 +238,7 @@ function CheckoutProgress() {
       <ol className="grid grid-cols-3 gap-3">
         {steps.map((step) => (
           <li key={step.number} aria-current={step.status === 'current' ? 'step' : undefined} className="relative flex items-center gap-2.5 sm:gap-3">
-            <span className={`flex size-8 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold ${step.status === 'current' ? 'bg-[#6366F1] text-white' : step.status === 'complete' ? 'bg-[#E9F2EC] text-[#38644B]' : 'bg-[#F3F3F5] text-[#92929C]'}`}>{step.status === 'complete' ? '✓' : step.number}</span>
+            <span className={`flex size-8 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold ${step.status === 'current' ? 'bg-[#6366F1] text-white' : step.status === 'complete' ? 'bg-[#E9F2EC] text-[#38644B]' : 'bg-[#F3F3F5] text-[#92929C]'}`}>{step.status === 'complete' ? <UiIcon name="check" size={14} /> : step.number}</span>
             <span className={`text-[10px] leading-4 sm:text-xs ${step.status === 'current' ? 'font-medium text-[#20211F]' : 'text-[#777780]'}`}>{step.label}</span>
             {step.number !== '03' && <span aria-hidden="true" className="absolute -right-2 hidden h-px w-4 bg-[#E8E8EC] sm:block" />}
           </li>

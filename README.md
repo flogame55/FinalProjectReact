@@ -56,6 +56,8 @@
 
 หลัง seed แล้ว หน้าแรก หน้ารายการ หมวดหมู่ และหน้ารายละเอียดอ่านข้อมูลจาก Supabase เท่านั้น หาก Supabase ใช้งานไม่ได้ แอปจะแสดง error state แทนการสลับไปใช้ API หรือข้อมูลตัวอย่าง
 
+หน้าแรกสุ่มสินค้าชิ้นใหญ่ในวงกลมและสินค้าแนะนำ 4 ชิ้นจากรายการ Supabase ใหม่เมื่อโหลดหน้า (`app/page.jsx` ใช้ `force-dynamic`) ส่วนการ์ดและลิงก์ยังใช้ข้อมูลสินค้าจริงในแคตตาล็อก
+
 DummyJSON ส่งราคาเป็น USD; สคริปต์ seed แปลงเป็น THB โดยใช้เรต USD/THB จาก [Frankfurter API](https://frankfurter.dev/) (แคชหนึ่งชั่วโมง) แล้วเก็บราคา USD เรต วันที่ และแหล่งที่มาไว้คู่กับราคา THB ใน Supabase ถ้าดึงเรตไม่ได้จะใช้ `USD_TO_THB_FALLBACK_RATE` (ค่าเริ่มต้น `33.62`) และระบุว่าเป็นเรตสำรอง ราคาที่แสดงเป็นราคาอ้างอิงสำหรับเว็บทดสอบ ไม่ใช่อัตรารับชำระเงินจริง
 
 5. **รัน Dev Server:**
@@ -84,11 +86,11 @@ DummyJSON ส่งราคาเป็น USD; สคริปต์ seed แ�
   - `app/products/page.jsx`
 
 * **👤 พี:**
-  - `app/layout.jsx`, `components/Nav.jsx`, `components/CartBadge.jsx`
+  - `app/layout.jsx`, `components/Nav.jsx`, `components/CartBadge.jsx`, `components/UiIcon.jsx`
   - `components/PauseButton.jsx`
   - `components/CheckoutForm.jsx` & `lib/schemas/checkout.js`
   - `app/products/[id]/page.jsx`
-  - `app/ready/page.jsx`
+  - `app/ready/page.jsx`, `app/payment/success/page.jsx`
   - `app/actions.js`
   - `app/not-found.jsx` & `app/error.jsx`
 
@@ -98,7 +100,7 @@ DummyJSON ส่งราคาเป็น USD; สคริปต์ seed แ�
 
 | ข้อกำหนดตาม Checklist | สถานะ | ตำแหน่งในโปรเจกต์ |
 |---|:---:|---|
-| **1. Next.js App Router อย่างน้อย 4 route** | ✅ ผ่าน (6 routes) | `app/page.jsx`, `app/products/page.jsx`, `app/products/[id]/page.jsx`, `app/cart/page.jsx`, `app/ready/page.jsx`, `app/history/page.jsx` |
+| **1. Next.js App Router อย่างน้อย 4 route** | ✅ ผ่าน (7 routes) | `app/page.jsx`, `app/products/page.jsx`, `app/products/[id]/page.jsx`, `app/cart/page.jsx`, `app/ready/page.jsx`, `app/history/page.jsx`, `app/payment/success/page.jsx` |
 | **2. มีทั้ง Server Component และ Client Component พร้อมอธิบาย** | ✅ ผ่าน | ดูตารางอธิบายเหตุผลด้านล่าง |
 | **3. Data fetching อย่างน้อย 1 จุดใช้ SSR/SSG/ISR อย่างเจตนา พร้อมอธิบาย** | ✅ ผ่าน | ดูรายละเอียดด้านล่าง (ISR ใน `lib/products.js`, `lib/currency.js` และ SSR ใน `app/history/page.jsx`, `app/products/page.jsx`) |
 | **4. มี mutation อย่างน้อย 1 จุดผ่าน Server Action หรือ Route Handler** | ✅ ผ่าน | `app/actions.js` (`confirmPurchaseAction`, `passItemAction`) |
@@ -118,6 +120,7 @@ DummyJSON ส่งราคาเป็น USD; สคริปต์ seed แ�
 | **`app/products/page.jsx`** | **Server Component** | อ่าน `searchParams` (`q`, `category`, `page`) จาก URL เพื่อทำ Database-level Pagination และ Selective Column Projection ที่ Supabase ก่อนส่ง HTML กลับมายังเบราว์เซอร์ |
 | **`app/products/[id]/page.jsx`** | **Server Component** | ดึงข้อมูลสินค้าเฉพาะรายการตาม Dynamic Route (`params.id`) พร้อมสร้าง `generateMetadata` สำหรับแสดงผลชื่อสินค้าและรูปพรีวิวบน Social Share |
 | **`app/history/page.jsx`** | **Server Component** | อ่าน Cookie `pause-session-id` เพื่อดึงข้อมูล `DecisionLog` ของผู้ใช้คนนั้นโดยตรงจาก Supabase ไม่เปิดเผย Database Query หรือ Connection Key แก่ Client |
+| **`app/payment/success/page.jsx`** | **Server Component** | แสดงหน้าผลลัพธ์ Checkout จำลองและโหลดรายละเอียดสินค้าจาก Supabase ตาม `productId` |
 | **`components/ProductCard.jsx`** | **Server Component** | เป็น Presentational Component แสดงผลข้อมูลการ์ดสินค้าและลิงก์ ไม่มีการใช้ React Hooks หรือ Browser Event Listener ทำให้ประหยัดขนาด JS Bundle |
 | **`app/layout.jsx`** | **Server Component** | โครงสร้างหลักของเว็บ ดึงอัตราแลกเปลี่ยนเริ่มต้นจาก Server แล้วส่งต่อเป็น props ให้กับ Context Provider |
 | **`app/cart/page.jsx`** | **Client Component** (`'use client'`) | ต้องเข้าถึง Web Storage (`localStorage`) เพื่ออ่านตะกร้าของผู้ใช้ และเชื่อมต่อกับ `usePauseCart` เพื่อสั่งลบ/ข้ามสินค้า |
@@ -127,7 +130,7 @@ DummyJSON ส่งราคาเป็น USD; สคริปต์ seed แ�
 | **`components/CheckoutForm.jsx`** | **Client Component** (`'use client'`) | จัดการ Form State และ Event การกรอกข้อมูล ตรวจสอบ Client-side validation แบบเรียลไทม์ด้วย `react-hook-form` และ `zodResolver` |
 | **`components/HistoryChart.jsx`** | **Client Component** (`'use client'`) | เรนเดอร์กราฟสถิติผ่านไลบรารี `recharts` ซึ่งต้องเข้าถึง DOM ของเบราว์เซอร์เพื่อคำนวณ SVG Layout และ Tooltip ตอน Hover |
 | **`components/SearchFilter.jsx`** | **Client Component** (`'use client'`) | ดักจับ Event การพิมพ์ค้นหาและการเลือก Dropdown หมวดหมู่ พร้อมอัปเดต Query String ลงใน URL ด้วย Next.js `useRouter` |
-| **`components/Nav.jsx`** & **`CartBadge.jsx`** | **Client Component** (`'use client'`) | ใช้ `usePathname` เพื่อไฮไลต์เมนูปัจจุบัน และดึงจำนวนสินค้าในตะกร้าจาก `usePauseCart` มาแสดงผลป้าย Badge แบบเรียลไทม์ |
+| **`components/Nav.jsx`** & **`CartBadge.jsx`** | **Client Component** (`'use client'`) | ใช้ `usePathname` เพื่อไฮไลต์เมนูปัจจุบัน แสดงไอคอน SVG และดึงจำนวนสินค้าในตะกร้าจาก `usePauseCart` มาแสดงผล Badge แบบเรียลไทม์ |
 
 ---
 
@@ -160,8 +163,13 @@ DummyJSON ส่งราคาเป็น USD; สคริปต์ seed แ�
 
 ## 🔄 Data Mutation (Server Actions)
 การเปลี่ยนแปลงข้อมูลในฐานข้อมูลทำผ่าน **Next.js Server Actions** (`'use server'`) ในไฟล์ [`app/actions.js`](./app/actions.js):
-* `confirmPurchaseAction(input)`: รับข้อมูลจาก CheckoutForm ตรวจสอบซ้ำด้วย `checkoutSchema` ฝั่ง Server เพื่อความปลอดภัย จากนั้นบันทึกลงตาราง `DecisionLog` ใน Supabase ด้วยสถานะ `BOUGHT` และสั่ง `revalidatePath('/history')` เพื่อให้หน้าสถิติอัปเดตข้อมูลทันที
+* `confirmPurchaseAction(input)`: รับข้อมูลจาก CheckoutForm ตรวจสอบซ้ำด้วย `checkoutSchema` ฝั่ง Server จากนั้นบันทึกการตัดสินใจจำลองลง `DecisionLog` ด้วยสถานะ `BOUGHT` และสั่ง `revalidatePath('/history')`; เมื่อสำเร็จหน้า `/ready` จะเปิด `/payment/success?productId=…&method=…`
 * `passItemAction(input)`: บันทึกลงตาราง `DecisionLog` ด้วยสถานะ `PASSED` และสั่ง revalidate หน้า `/history` เช่นเดียวกัน
+
+### Checkout เป็นโหมดสาธิต
+* พร้อมเพย์แสดง QR ตัวอย่างที่ติดป้าย `DEMO` และสแกนชำระเงินจริงไม่ได้; บัตรแสดงหน้าบัตรตัวอย่างที่ไม่มีช่องกรอกหรือเก็บข้อมูลบัตร
+* การยืนยันบันทึก `BOUGHT` เพื่อสาธิต flow และแสดงหน้าสำเร็จ แต่ไม่มีการโอนเงิน ตัดเงินจริง หรือจัดส่งสินค้า; เก็บเงินปลายทางก็เป็นเพียงคำสั่งซื้อจำลอง
+* โปรเจกต์ยังไม่ได้เชื่อม Payment Gateway และเลขพร้อมเพย์ที่ผู้ใช้ให้ไว้ไม่ได้ถูกนำไปสร้าง QR รับเงินจริง ห้ามใช้หน้าสาธิตนี้เพื่อรับชำระเงินจากลูกค้า
 
 ---
 
@@ -178,4 +186,9 @@ DummyJSON ส่งราคาเป็น USD; สคริปต์ seed แ�
 * กำหนด Schema ใน [`lib/schemas/checkout.js`](./lib/schemas/checkout.js) ตรวจสอบความถูกต้องของข้อมูล (ชื่อ-นามสกุล, ที่อยู่จัดส่งอย่างน้อย 10 ตัวอักษร, เบอร์โทรศัพท์ 9-10 หลักด้วย Regex, ช่องทางชำระเงิน)
 * นำมาเชื่อมต่อกับฟอร์มสั่งซื้อใน [`components/CheckoutForm.jsx`](./components/CheckoutForm.jsx) ด้วย `zodResolver` แสดง Error Message สีแดงแจ้งเตือนใต้ช่องที่กรอกไม่ถูกต้องทันทีแบบ Interactive
 * มีการนำ Schema เดียวกันไปใช้ตรวจสอบซ้ำ (Double Validation) ที่ Server Action ใน [`app/actions.js`](./app/actions.js) ป้องกันการส่งข้อมูลไม่พึงประสงค์ข้าม Client
+
+---
+
+## ◈ ไอคอนและการเคลื่อนไหว
+`components/UiIcon.jsx` รวมไอคอนเส้น SVG ที่ใช้ซ้ำในเมนูและปุ่ม โดยไม่เพิ่มไลบรารีไอคอนภายนอก; UI ใช้ SVG แทนอิโมจิ และเคารพ `prefers-reduced-motion`
 

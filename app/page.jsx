@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function HomePage() {
   const products = await getProducts()
-  const heroProduct = products.find((product) => /chair/i.test(product.name)) || products.find((product) => product.category === 'home-decoration') || products[0]
+  const heroProduct = products[Math.floor(Math.random() * products.length)]
   const categories = [...new Set(products.map((product) => product.category))]
   const chosenCategories = ['home-decoration', 'furniture', 'beauty', 'smartphones', 'home', 'electronics', 'fashion', 'lifestyle']
     .filter((category) => categories.includes(category)).slice(0, 4)
@@ -46,19 +46,11 @@ export default async function HomePage() {
           </div>
         </div>
         {heroProduct ? (
-          <Link href={'/products/' + heroProduct.id} className="editorial-card group relative flex min-h-[380px] flex-col overflow-hidden rounded-[12px] bg-[#EEEFEB] p-6 sm:min-h-[480px] sm:p-8">
-            <div className="flex items-center justify-between text-[10px] tracking-[.14em] text-[#696a64]"><span>THE EVERYDAY EDIT</span><span>01 / PAUSE</span></div>
-            <div className="parallax-window relative min-h-[260px] flex-1">
-              <ParallaxLayer className="absolute inset-0" speed={0.08}>
-                <div className="absolute inset-0">
-                  <Image src={heroProduct.imageUrl} alt={heroProduct.name} fill unoptimized sizes="(max-width: 1024px) 90vw, 48vw" priority className="object-contain p-4 transition duration-500 group-hover:scale-[1.035]" />
-                </div>
-              </ParallaxLayer>
+          <Link href={'/products/' + heroProduct.id} aria-label={`ดูสินค้า ${heroProduct.name}`} className="calm-hero-image group">
+            <div className="calm-image-disc">
+              <Image src={heroProduct.imageUrl} alt={heroProduct.name} fill unoptimized sizes="(max-width: 1024px) 88vw, 490px" priority className="object-contain p-8" />
             </div>
-            <div className="flex items-center justify-between gap-4 rounded-[8px] bg-white/90 p-4 sm:p-5">
-              <div className="min-w-0"><p className="eyebrow">{getCategoryLabel(heroProduct.category)}</p><h2 className="mt-1 truncate text-sm font-medium">{heroProduct.name}</h2><p className="mt-1 text-xs text-[#6B6B6B]">{formatPrice(heroProduct.price)}</p></div>
-              <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-full border border-[#E8E8EC] bg-white text-lg transition group-hover:border-[#6366F1] group-hover:text-[#6366F1]">↗</span>
-            </div>
+            <span>{getCategoryLabel(heroProduct.category)} <b aria-hidden="true">·</b> {formatPrice(heroProduct.price)}</span>
           </Link>
         ) : null}
       </section>

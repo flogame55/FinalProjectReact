@@ -12,6 +12,7 @@ import Link from 'next/link'
 import { usePauseCart } from '@/context/PauseCartContext'
 import Countdown from '@/components/Countdown'
 import { formatPrice } from '@/lib/presentation'
+import UiIcon from '@/components/UiIcon'
 
 export default function CartPage() {
   const { items, readyItems, removeItem, skipItem, hydrated, now, devFastForward, setDevFastForward } = usePauseCart()
@@ -36,7 +37,7 @@ export default function CartPage() {
             }`}
             title="สำหรับพรีเซนต์: เร่งเวลาคิดให้เดินเร็วขึ้น 3,600 เท่า (1 วินาที = 1 ชั่วโมง)"
           >
-            <span className={devFastForward ? 'animate-pulse' : ''}>⚡</span>
+            <UiIcon name="bolt" size={14} className={devFastForward ? 'animate-pulse' : ''} />
             <span>{devFastForward ? 'กำลังเร่งเวลา (1 วิ = 1 ชม.)' : 'เร่งเวลา (Dev Mode)'}</span>
           </button>
           <Link href="/products" className="button-secondary">เลือกดูสินค้าต่อ <span aria-hidden="true">↗</span></Link>
@@ -86,7 +87,7 @@ export default function CartPage() {
                       <div className="flex flex-wrap items-center justify-between gap-3 rounded-[8px] border border-emerald-200 bg-emerald-50/60 p-3.5">
                         <span className="inline-flex items-center gap-2 text-xs font-medium text-emerald-800">
                           <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                          {item.skipped ? 'ข้ามเวลาพักแล้ว · พร้อมตัดสินใจ' : 'ครบเวลาพักคิดแล้ว 🎉'}
+                          {item.skipped ? 'ข้ามเวลาพักแล้ว · พร้อมตัดสินใจ' : 'ครบเวลาพักคิดแล้ว'}
                         </span>
                         <Link href="/ready" className="button-primary text-xs !py-1.5 !px-3 font-medium">
                           ไปตัดสินใจ (ซื้อหรือผ่าน) <span aria-hidden="true">→</span>

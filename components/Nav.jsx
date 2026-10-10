@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import CartBadge from './CartBadge'
+import UiIcon from './UiIcon'
 
 import { usePauseCart } from '@/context/PauseCartContext'
 
@@ -11,13 +12,11 @@ export default function Nav() {
   const { readyItems = [] } = usePauseCart() || {}
   const readyCount = readyItems.length
 
-  if (pathname.startsWith('/design-preview')) return null
-
   const links = [
-    { href: '/products', label: '1. เลือกดูสินค้า' },
-    { href: '/cart', label: '2. ตะกร้าพักคิด' },
-    { href: '/ready', label: '3. พร้อมตัดสินใจ', badge: readyCount },
-    { href: '/history', label: 'สรุปการตัดสินใจ' },
+    { href: '/products', label: '1. เลือกดูสินค้า', icon: 'catalog' },
+    { href: '/cart', label: '2. ตะกร้าพักคิด', icon: 'bag' },
+    { href: '/ready', label: '3. พร้อมตัดสินใจ', icon: 'ready', badge: readyCount },
+    { href: '/history', label: 'สรุปการตัดสินใจ', icon: 'history' },
   ]
 
   return (
@@ -30,10 +29,10 @@ export default function Nav() {
           <span className="font-display text-[25px] font-semibold tracking-[-.07em]">pause<span className="text-[#85858d]">.</span></span>
         </Link>
         <nav aria-label="เมนูหลัก" className="hidden h-full items-center gap-7 md:flex">
-          {links.map(({ href, label, badge }) => (
+          {links.map(({ href, label, badge, icon }) => (
             <Link key={href} href={href} aria-current={pathname.startsWith(href) ? 'page' : undefined}
               className={'inline-flex h-full items-center gap-1.5 border-b-2 text-[13px] font-medium transition-colors ' + (pathname.startsWith(href) ? 'border-[#6366F1] text-[#4F46E5]' : 'border-transparent text-[#6B6B6B] hover:text-[#0A0A0A]')}>
-              <span>{label}</span>
+              <UiIcon name={icon} size={15} className="text-current opacity-70" /><span>{label}</span>
               {Boolean(badge) && (
                 <span className="inline-flex size-4 items-center justify-center rounded-full bg-emerald-600 text-[9px] font-bold text-white">
                   {badge}
@@ -43,14 +42,14 @@ export default function Nav() {
           ))}
         </nav>
         <Link href="/cart" aria-current={pathname === '/cart' ? 'page' : undefined} className="flex min-h-10 items-center gap-2.5 rounded-[6px] border border-[#E8E8EC] bg-white px-3.5 text-xs font-medium transition hover:border-[#bfc0ca]">
-          <svg aria-hidden="true" width="16" height="18" viewBox="0 0 20 22" fill="none" stroke="currentColor" strokeWidth="1.4"><path d="M3 7h14l1 13H2L3 7Z" /><path d="M6 8V5a4 4 0 0 1 8 0v3" /></svg>
+          <UiIcon name="bag" size={17} />
           ตะกร้าพัก <CartBadge />
         </Link>
       </div>
       <nav aria-label="เมนูบนมือถือ" className="flex justify-start gap-5 overflow-x-auto border-t border-[#E8E8EC] px-4 sm:justify-center md:hidden">
-        {links.map(({ href, label, badge }) => (
+        {links.map(({ href, label, badge, icon }) => (
           <Link key={href} href={href} aria-current={pathname.startsWith(href) ? 'page' : undefined} className={'inline-flex shrink-0 items-center gap-1 border-b-2 py-3 text-[11px] font-medium ' + (pathname.startsWith(href) ? 'border-[#6366F1] text-[#4F46E5]' : 'border-transparent text-[#6B6B6B]')}>
-            <span>{label}</span>
+            <UiIcon name={icon} size={13} className="text-current opacity-70" /><span>{label}</span>
             {Boolean(badge) && (
               <span className="inline-flex size-3.5 items-center justify-center rounded-full bg-emerald-600 text-[8px] font-bold text-white">
                 {badge}

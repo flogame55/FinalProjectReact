@@ -4,6 +4,7 @@ import { useId, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { usePauseCart } from '@/context/PauseCartContext'
+import UiIcon from '@/components/UiIcon'
 
 const PRESETS = [
   { value: '1', label: '1 ชั่วโมง' },
@@ -28,7 +29,7 @@ export default function PauseButton({ productId, product }) {
     return (
       <div className="surface space-y-4 p-5 sm:p-6">
         <div className="flex items-start gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 font-semibold" aria-hidden="true">✓</span>
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700"><UiIcon name="check" size={17} /></span>
           <div>
             <h2 className="font-medium text-[#0A0A0A]">เก็บไว้ในตะกร้าพักแล้ว</h2>
             <p className="mt-1 text-sm leading-6 text-[#6B6B6B]">กำลังช่วยคุณนับเวลาถอยหลัง เพื่อให้เวลาคิดก่อนตัดสินใจ</p>
@@ -36,7 +37,7 @@ export default function PauseButton({ productId, product }) {
         </div>
         <div className="grid grid-cols-2 gap-3 pt-1">
           <Link href="/cart" className="button-primary text-center">ดูตะกร้าพัก <span aria-hidden="true">→</span></Link>
-          <button type="button" onClick={handleSkip} className="button-secondary text-center text-xs">ไม่อยากรอ · ตัดสินใจเลย ⚡</button>
+          <button type="button" onClick={handleSkip} className="button-secondary text-center text-xs"><UiIcon name="bolt" size={14} />ไม่อยากรอ · ตัดสินใจเลย</button>
         </div>
       </div>
     )
@@ -91,7 +92,7 @@ export default function PauseButton({ productId, product }) {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M8 5v14M16 5v14" /></svg>
           พักคิดก่อน{validHours && ` (${hours} ชม.)`}
         </button>
-        <button type="button" disabled={!hydrated} onClick={handleSkip} className="button-quiet w-full text-xs text-[#6B6B6B] hover:text-[#0A0A0A]">ไม่อยากรอ · ข้ามไปตัดสินใจซื้อทันที ⚡</button>
+        <button type="button" disabled={!hydrated} onClick={handleSkip} className="button-quiet w-full text-xs text-[#6B6B6B] hover:text-[#0A0A0A]"><UiIcon name="bolt" size={14} />ไม่อยากรอ · ข้ามไปตัดสินใจซื้อทันที</button>
       </div>
       <p className="text-center text-xs leading-5 text-[#9C9C9C]">ยังไม่มีการสั่งซื้อหรือเรียกเก็บเงินในขั้นตอนนี้</p>
     </div>
