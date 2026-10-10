@@ -24,9 +24,10 @@ export default function Countdown({ startedAt, readyAt, durationMs, onSkip, isFa
 
   const isReady = timeLeft !== null && timeLeft <= 0
   const totalDuration = Number(durationMs) || Number(readyAt) - Number(startedAt)
-  const progress = timeLeft === null || !Number.isFinite(totalDuration) || totalDuration <= 0
+  const elapsedPercent = timeLeft === null || !Number.isFinite(totalDuration) || totalDuration <= 0
     ? 0
     : Math.round(Math.min(100, Math.max(0, ((totalDuration - timeLeft) / totalDuration) * 100)))
+  const remainingPercent = 100 - elapsedPercent
 
   return (
     <div className="space-y-3">
@@ -41,19 +42,19 @@ export default function Countdown({ startedAt, readyAt, durationMs, onSkip, isFa
       </div>
       <div className="space-y-1.5">
         <div className="flex items-center justify-between text-[10px] text-[#85858d]">
-          <span>ความคืบหน้าเวลาพักคิด</span>
-          <span>{progress}% ผ่านไป</span>
+          <span>เวลาพักที่เหลือ</span>
+          <span>{remainingPercent}%</span>
         </div>
         <div
           role="progressbar"
           aria-label="ความคืบหน้าเวลาพักคิด"
           aria-valuemin={0}
           aria-valuemax={100}
-          aria-valuenow={progress}
-          aria-valuetext={`ผ่านไป ${progress}%`}
+          aria-valuenow={remainingPercent}
+          aria-valuetext={`เหลือ ${remainingPercent}%`}
           className="h-1.5 overflow-hidden rounded-full bg-[#ECECF1]"
         >
-          <div className="h-full rounded-full bg-[#6366F1] transition-[width] duration-1000 ease-linear" style={{ width: `${progress}%` }} />
+          <div className="h-full rounded-full bg-[#6366F1] transition-[width] duration-1000 ease-linear" style={{ width: `${remainingPercent}%` }} />
         </div>
       </div>
     </div>
