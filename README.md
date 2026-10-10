@@ -102,7 +102,7 @@ DummyJSON ส่งราคาเป็น USD; สคริปต์ seed แ�
 |---|:---:|---|
 | **1. Next.js App Router อย่างน้อย 4 route** | ✅ ผ่าน (7 routes) | `app/page.jsx`, `app/products/page.jsx`, `app/products/[id]/page.jsx`, `app/cart/page.jsx`, `app/ready/page.jsx`, `app/history/page.jsx`, `app/payment/success/page.jsx` |
 | **2. มีทั้ง Server Component และ Client Component พร้อมอธิบาย** | ✅ ผ่าน | ดูตารางอธิบายเหตุผลด้านล่าง |
-| **3. Data fetching อย่างน้อย 1 จุดใช้ SSR/SSG/ISR อย่างเจตนา พร้อมอธิบาย** | ✅ ผ่าน | ดูรายละเอียดด้านล่าง (ISR ใน `lib/products.js`, `lib/currency.js` และ SSR ใน `app/history/page.jsx`, `app/products/page.jsx`) |
+| **3. Data fetching อย่างน้อย 1 จุดใช้ SSR/SSG/ISR อย่างเจตนา พร้อมอธิบาย** | ✅ ผ่าน | ใช้ SSR ใน `app/page.jsx`, `app/products/page.jsx`, `app/history/page.jsx` และ SSG ผ่าน `generateStaticParams()` ใน `app/products/[id]/page.jsx`; ดูเหตุผลด้านล่าง |
 | **4. มี mutation อย่างน้อย 1 จุดผ่าน Server Action หรือ Route Handler** | ✅ ผ่าน | `app/actions.js` (`confirmPurchaseAction`, `passItemAction`) |
 | **5. มี global state ฝั่ง client (Context หรือ Redux/Zustand)** | ✅ ผ่าน | `context/PauseCartContext.jsx` ครอบที่ `app/layout.jsx` |
 | **6. ฟอร์มที่ validate จริง (react-hook-form + zod)** | ✅ ผ่าน | `components/CheckoutForm.jsx` + `lib/schemas/checkout.js` |
@@ -122,7 +122,7 @@ DummyJSON ส่งราคาเป็น USD; สคริปต์ seed แ�
 | **`app/history/page.jsx`** | **Server Component** | อ่าน Cookie `pause-session-id` เพื่อดึงข้อมูล `DecisionLog` ของผู้ใช้คนนั้นโดยตรงจาก Supabase ไม่เปิดเผย Database Query หรือ Connection Key แก่ Client |
 | **`app/payment/success/page.jsx`** | **Server Component** | แสดงหน้าผลลัพธ์ Checkout จำลองและโหลดรายละเอียดสินค้าจาก Supabase ตาม `productId` |
 | **`components/ProductCard.jsx`** | **Server Component** | เป็น Presentational Component แสดงผลข้อมูลการ์ดสินค้าและลิงก์ ไม่มีการใช้ React Hooks หรือ Browser Event Listener ทำให้ประหยัดขนาด JS Bundle |
-| **`app/layout.jsx`** | **Server Component** | โครงสร้างหลักของเว็บ ดึงอัตราแลกเปลี่ยนเริ่มต้นจาก Server แล้วส่งต่อเป็น props ให้กับ Context Provider |
+| **`app/layout.jsx`** | **Server Component** | โครงสร้างหลักและ metadata ของเว็บ ครอบหน้าด้วย `PauseCartProvider`; ไม่ได้ดึงอัตราแลกเปลี่ยน |
 | **`app/cart/page.jsx`** | **Client Component** (`'use client'`) | ต้องเข้าถึง Web Storage (`localStorage`) เพื่ออ่านตะกร้าของผู้ใช้ และเชื่อมต่อกับ `usePauseCart` เพื่อสั่งลบ/ข้ามสินค้า |
 | **`app/ready/page.jsx`** | **Client Component** (`'use client'`) | มีสถานะการโต้ตอบที่ซับซ้อน (เปิดฟอร์มยืนยัน, กดปุ่มผ่าน, แสดงผลการตัดสินใจแบบ Interactive) และเรียก Server Action |
 | **`components/Countdown.jsx`** | **Client Component** (`'use client'`) | ใช้ `setInterval` และ React State เพื่อคำนวณและแสดงผลเวลานับถอยหลังแบบ Real-time ทุก 1 วินาทีบนหน้าจอ |
@@ -134,30 +134,27 @@ DummyJSON ส่งราคาเป็น USD; สคริปต์ seed แ�
 
 ---
 
-## ⚡ กลยุทธ์ Data Fetching (ISR และ SSR อย่างเจตนา)
+## ⚡ กลยุทธ์ Data Fetching (SSR และ SSG อย่างเจตนา)
 
-โปรเจกต์นี้เลือกใช้กลยุทธ์การดึงข้อมูลที่เหมาะสมกับธรรมชาติของข้อมูลแต่ละประเภท (ไม่ใช่ค่า Default):
+โปรเจกต์กำหนดวิธี render ตามลักษณะข้อมูลอย่างชัดเจน โดยปัจจุบันเส้นทางหลักใช้ SSR และ SSG ไม่มีการตั้ง ISR สำหรับแคตตาล็อกสินค้า:
 
-### 1. ISR (Incremental Static Regeneration) — สำหรับข้อมูลที่เปลี่ยนแปลงไม่บ่อย
-* **ดึงสินค้า (`lib/products.js:61`):**  
-  ใช้ `fetch(url, { next: { revalidate: 60 } })`  
-  **เหตุผล:** รายการสินค้าไม่ได้เปลี่ยนแปลงทุกวินาที การแคชไว้ 60 วินาทีช่วยให้หน้าเว็บตอบสนองเร็วแบบ Static HTML พร้อมลดภาระงานของฐานข้อมูลและ API ภายนอก โดยที่สินค้าที่เพิ่มใหม่จะปรากฏบนเว็บภายใน 1 นาที
-* **ดึงอัตราแลกเปลี่ยน USD/THB (`lib/currency.js:15`):**  
-  ใช้ `fetch(RATE_URL, { next: { revalidate: 3600 } })`  
-  **เหตุผล:** อัตราแลกเปลี่ยนของ Frankfurter API อัปเดตวันละ 1 ครั้ง การแคชไว้ 1 ชั่วโมง (3,600 วินาที) ช่วยป้องกัน Rate Limit ของ Third-party API และลดเวลา Request ลงได้เกือบ 100%
-
-### 2. SSR (Server-Side Rendering / Dynamic on Request) — สำหรับข้อมูลเฉพาะบุคคลที่ต้องสดใหม่เสมอ
-* **หน้าประวัติและการเงินที่ประหยัดได้ (`app/history/page.jsx`):**  
-  กำหนด `export const dynamic = 'force-dynamic'` และอ่าน `cookies()` ใน Header  
+### 1. SSR (Server-Side Rendering / Dynamic on Request)
+* **หน้าแรก (`app/page.jsx`):** กำหนด `export const dynamic = 'force-dynamic'` และเรียก `getProducts()` บนเซิร์ฟเวอร์
+  **เหตุผล:** สินค้าชิ้นใหญ่และสินค้าแนะนำถูกสุ่มจากแคตตาล็อกทุกครั้งที่ร้องขอหน้า จึง render ใหม่แทนการใช้หน้า static ที่เก็บผลสุ่มเดิมไว้
+* **หน้าประวัติและการเงินที่ประหยัดได้ (`app/history/page.jsx`):**
+  กำหนด `export const dynamic = 'force-dynamic'` และอ่าน `cookies()` ใน Server Component
   **เหตุผล:** ประวัติการซื้อและการประหยัดเงินเชื่อมโยงกับ `pause-session-id` ของผู้ใช้แต่ละคน จึงไม่สามารถแคชเป็นหน้า Static รวมได้ จำเป็นต้อง Query สดจากตาราง `DecisionLog` ทุกครั้งที่มีการเปิดหน้า เพื่อให้เห็นข้อมูลทันทีหลังกดซื้อหรือกดผ่าน
-* **หน้ารายการสินค้าและการกรอง (`app/products/page.jsx`):**  
-  เรนเดอร์สดบนเซิร์ฟเวอร์ตาม Query Parameters (`q`, `category`, `page`, `sort`)  
-  **เหตุผล:** ผู้ใช้สามารถค้นหาคำใดก็ได้ และเปลี่ยนตัวกรองได้อย่างอิสระ การทำ SSR ร่วมกับ Supabase `.range(from, to)` ช่วยให้ดึงเฉพาะหน้าที่มีการร้องขอ (Pagination) ไม่ต้องส่งสินค้าทั้งหมดลงมาประมวลผลที่เครื่องผู้ใช้
+* **หน้ารายการสินค้าและการกรอง (`app/products/page.jsx`):**
+  อ่าน `searchParams` (`q`, `category`, `page`, `sort`) แล้ว query และแบ่งหน้าด้วย Supabase `.range(from, to)`
+  **เหตุผล:** ผลลัพธ์ขึ้นกับ URL ของแต่ละคำค้นและตัวกรอง จึงต้องสร้างผลลัพธ์ตาม request และส่งเฉพาะรายการของหน้าที่ผู้ใช้เปิด
 
-### 3. SSG (Static Site Generation) — สำหรับหน้ารายละเอียดสินค้าที่สร้างล่วงหน้า
+### 2. SSG (Static Site Generation) — สำหรับหน้ารายละเอียดสินค้าที่สร้างล่วงหน้า
 * **หน้ารายละเอียดสินค้า (`app/products/[id]/page.jsx`):**  
   ใช้ฟังก์ชัน `generateStaticParams()` ดึงสินค้า 24 ชิ้นแรกมา Pre-render เป็นไฟล์ HTML ตั้งแต่ขั้นตอน `npm run build`  
-  **เหตุผล:** สินค้าหลักถูกสร้างเป็น Static HTML รอไว้บน CDN ล่วงหน้า ทำให้เปิดดูรายละเอียดสินค้าได้ทันทีโดยไม่มีดีเลย์ ส่วนสินค้าชิ้นอื่น ๆ นอกเหนือจากนี้จะถูกประมวลผล On-demand ผ่าน ISR เมื่อมีผู้เข้าชมครั้งแรก
+  **เหตุผล:** หน้าสินค้ากลุ่มแรกพร้อมให้บริการหลัง build โดยไม่ต้อง query ข้อมูลเพื่อ render ในการเข้าชมครั้งแรก ส่วน ID ที่ไม่อยู่ในรายการ build ใช้พฤติกรรม on-demand ตาม dynamic route ของ Next.js; โค้ดปัจจุบันไม่ได้กำหนดช่วงเวลา revalidate สำหรับหน้านี้ จึงไม่เรียกว่า ISR
+
+### หมายเหตุเรื่องเรตแลกเปลี่ยน
+`lib/currency.js` มี helper `getUsdToThbRate()` ซึ่งถูกเรียกจาก `scripts/seed.js` เพื่อแปลงราคาในขั้นตอน seed เท่านั้น ปัจจุบันไม่มีหน้าใน `app/` เรียก helper นี้ และ `app/layout.jsx` ไม่ได้โหลดหรือส่งเรตแลกเปลี่ยนให้ Client ส่วนข้อมูลราคาและเรตที่แสดงบนเว็บอ่านจากค่าที่บันทึกไว้ใน Supabase
 
 ---
 
@@ -167,9 +164,9 @@ DummyJSON ส่งราคาเป็น USD; สคริปต์ seed แ�
 * `passItemAction(input)`: บันทึกลงตาราง `DecisionLog` ด้วยสถานะ `PASSED` และสั่ง revalidate หน้า `/history` เช่นเดียวกัน
 
 ### Checkout เป็นโหมดสาธิต
-* พร้อมเพย์แสดง QR ตัวอย่างที่ติดป้าย `DEMO` และสแกนชำระเงินจริงไม่ได้; บัตรแสดงหน้าบัตรตัวอย่างที่ไม่มีช่องกรอกหรือเก็บข้อมูลบัตร
-* การยืนยันบันทึก `BOUGHT` เพื่อสาธิต flow และแสดงหน้าสำเร็จ แต่ไม่มีการโอนเงิน ตัดเงินจริง หรือจัดส่งสินค้า; เก็บเงินปลายทางก็เป็นเพียงคำสั่งซื้อจำลอง
-* โปรเจกต์ยังไม่ได้เชื่อม Payment Gateway และเลขพร้อมเพย์ที่ผู้ใช้ให้ไว้ไม่ได้ถูกนำไปสร้าง QR รับเงินจริง ห้ามใช้หน้าสาธิตนี้เพื่อรับชำระเงินจากลูกค้า
+* พร้อมเพย์สร้าง QR ที่สแกนโอนเงินจริงได้ โดยใช้หมายเลขพร้อมเพย์ที่ตั้งค่าไว้ใน `components/CheckoutForm.jsx` และยอดของสินค้า เว็บไม่มีระบบตรวจสอบว่าเงินเข้าหรือไม่ ผู้ใช้จึงต้องตรวจสอบรายการในแอปธนาคารด้วยตนเองก่อนยืนยัน
+* ฟอร์มบัตรมีช่องกรอกชื่อ หมายเลขบัตร วันหมดอายุ และ CVV พร้อมตรวจรูปแบบในเบราว์เซอร์ ข้อมูลบัตรไม่ถูกส่งไปยัง Server Action หรือบันทึก และไม่มีการเรียกเก็บเงินจริง กรุณาใช้ข้อมูลทดสอบเท่านั้น
+* การกดยืนยันจะบันทึกการตัดสินใจ `BOUGHT` โดยไม่ตรวจว่ามีการโอนหรือจ่ายบัตรแล้ว ไม่มีระบบ Payment Gateway หรือระบบจัดส่งสินค้า และเก็บเงินปลายทางก็เป็นเพียงตัวเลือกใน flow สาธิต
 
 ---
 
