@@ -6,6 +6,7 @@ import { formatPrice, getCategoryLabel } from '@/lib/presentation'
 import PauseButton from '@/components/PauseButton'
 import ProductGallery from '@/components/ProductGallery'
 import ProductCard from '@/components/ProductCard'
+import ExchangeRateCaption from '@/components/ExchangeRateCaption'
 
 // generateMetadata และหน้าเพจใช้สินค้าตัวเดียวกัน — cache ไว้เพื่อ query ฐานข้อมูลครั้งเดียวต่อ request
 const getProduct = cache(getProductById)
@@ -47,7 +48,7 @@ export default async function ProductDetailPage({ params }) {
             </div>
           </div>
           <div className="flex items-center justify-between gap-4 border-y border-[#E8E8EC] py-5">
-            <div><p className="text-3xl font-semibold tracking-tight text-[#20211F]">{formatPrice(product.price)}</p></div>
+            <div><p className="text-3xl font-semibold tracking-tight text-[#20211F]">{formatPrice(product.price)}</p><ExchangeRateCaption product={product} className="mt-1 text-[10px] text-[#85858d]" /></div>
             {Number.isFinite(product.stock) && <span className={`inline-flex items-center gap-2 text-xs ${product.stock > 0 ? 'text-[#526151]' : 'text-[#6B6B6B]'}`}><span className={`h-1.5 w-1.5 rounded-full ${product.stock > 0 ? 'bg-[#73836A]' : 'bg-[#A8A9A2]'}`} />{product.stock > 0 ? 'มีสินค้า' : 'สินค้าหมด'}</span>}
           </div>
           {product.description && <p className="text-sm leading-7 text-[#6B6B6B]">{product.description}</p>}

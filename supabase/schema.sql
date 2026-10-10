@@ -9,14 +9,26 @@
 
 -- 1. สร้างตาราง Product สำหรับแคตตาล็อกสินค้า
 CREATE TABLE IF NOT EXISTS "Product" (
-  "id" INTEGER PRIMARY KEY, -- รองรับ ID 1-194 จาก DummyJSON
+  "id" INTEGER PRIMARY KEY,
   "name" TEXT NOT NULL,
   "price" NUMERIC(10,2) NOT NULL, -- เก็บราคาเงินบาท (THB)
+  "priceUsd" NUMERIC(10,2),
+  "usdToThbRate" NUMERIC(12,6),
+  "exchangeRateDate" DATE,
+  "exchangeRateSource" TEXT,
   "category" TEXT NOT NULL,
   "imageUrl" TEXT NOT NULL,
   "description" TEXT NOT NULL,
+  "rating" NUMERIC(3,2),
   "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- รองรับฐานข้อมูลที่สร้างจาก schema รุ่นก่อนหน้า
+ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "priceUsd" NUMERIC(10,2);
+ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "usdToThbRate" NUMERIC(12,6);
+ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "exchangeRateDate" DATE;
+ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "exchangeRateSource" TEXT;
+ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "rating" NUMERIC(3,2);
 
 -- 2. สร้างตาราง DecisionLog (เก็บประวัติการตัดสินใจแยกตาม sessionId ของแต่ละเครื่อง)
 CREATE TABLE IF NOT EXISTS "DecisionLog" (

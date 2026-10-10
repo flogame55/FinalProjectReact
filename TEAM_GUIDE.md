@@ -32,34 +32,36 @@ graph TD
      - ใน `Cookie` ('pause-session-id'): **ตั้งอายุไว้ 1 ปี (`max-age=31536000`)** เพื่อให้ Server Components ของ Next.js (เช่น หน้า `/history`) สามารถอ่านได้โดยตรงทันที
      - **โหมด Incognito / Private Window:** จะได้ `sessionId` ใหม่ชั่วคราว เหมาะแก่การทดสอบจำลองเป็นคนใหม่
 3. **Supabase PostgreSQL Database:**
-   - **`Product`**: เก็บแคตตาล็อกตัวอย่างสำหรับ seed และความสัมพันธ์ของ DecisionLog; หน้าแคตตาล็อกทดสอบอ่านสินค้าและหมวดหมู่จาก DummyJSON API (ไม่ต้องใช้ API key)
+   - **`Product`**: เป็นแหล่งข้อมูลสินค้าเพียงแหล่งเดียวของแอป ทั้งหน้าแคตตาล็อกและหน้ารายละเอียดอ่านจาก Supabase; ใช้ DummyJSON เฉพาะเป็นต้นทางสำหรับ seed เข้าฐานข้อมูล
    - **`DecisionLog`**: บันทึกประวัติการตัดสินใจ (`sessionId`, `productId`, `price`, `decisionStatus`, `skipped`, `timestamp`)
    - **Storage Bucket (`product-images`)**: จัดเก็บไฟล์รูปภาพสินค้าแบบ Public
 
 ### นำสินค้า DummyJSON ขึ้น Supabase
 
-หน้าเว็บกำลังอ่านแคตตาล็อกจาก DummyJSON โดยตรง ส่วน `scripts/seed.js` ปัจจุบันยังเพิ่มข้อมูลตัวอย่าง 500 รายการของโปรเจกต์นี้ ไม่ได้นำข้อมูล DummyJSON เข้า Supabase หากเพื่อนต้องการให้สินค้า API อยู่ในตาราง `Product` ให้ทำตามขั้นตอนนี้:
+แอปอ่านแคตตาล็อก หมวดหมู่ และรายละเอียดสินค้าจากตาราง `Product` ใน Supabase เท่านั้น ส่วน `scripts/seed.js` ใช้ DummyJSON เป็นแหล่งนำเข้าข้อมูลเริ่มต้น และแปลงราคาเป็น THB ก่อนบันทึกลง Supabase:
 
-> DummyJSON ส่ง `price` มาเป็น USD แต่หน้าเว็บแปลงเป็น THB ด้วย USD/THB จาก Frankfurter API ก่อนแสดงผล (แคช 1 ชั่วโมง) และปัดเป็นจำนวนเต็มลงท้าย 0 หรือ 9 ถ้าจะนำสินค้า API ลงฐานข้อมูล ให้ตัดสินใจให้ชัดว่าจะเก็บราคา THB แบบเดียวกับหน้าเว็บ หรือเก็บ USD แล้วปรับทุกจุดที่อ่าน/รวม/แสดงราคาให้แปลงสกุลเงินสม่ำเสมอ ห้ามบันทึก USD แล้วติดป้ายเป็น THB
+> DummyJSON ส่ง `price` มาเป็น USD; สคริปต์ seed แปลงเป็น THB ด้วยเรตจาก Frankfurter (แคชหนึ่งชั่วโมง) และเก็บทั้งราคา THB ราคา USD ต้นทาง เรต วันที่ และแหล่งเรต เพื่อให้หน้าเว็บแสดงราคาและที่มาได้ตรงกับข้อมูลที่นำเข้า
 
-1. ดึงข้อมูลจาก [DummyJSON Products API](https://dummyjson.com/docs/products) ที่ `https://dummyjson.com/products?limit=0` ไม่ต้องใช้ API key; เอกสารระบุชุดข้อมูลปัจจุบัน 194 รายการ และ `limit=0` ใช้ขอสินค้าทั้งหมด
+1. ดึงข้อมูลทั้งหมดจาก [DummyJSON Products API](https://dummyjson.com/docs/products) ที่ `https://dummyjson.com/products?limit=0` ไม่ต้องใช้ API key; จำนวนรายการขึ้นกับข้อมูลที่ API ให้บริการ
 2. แปลงฟิลด์ก่อน insert:
 
    | DummyJSON | Supabase `Product` |
    |---|---|
    | `id` | `id` (คง ID เดิมเพื่อให้ตรงกับ product ID ที่หน้าเว็บใช้) |
    | `title` | `name` |
-   | `price` | แปลง USD เป็น THB ก่อนเก็บใน `price`; หากต้องเก็บราคาอ้างอิง USD ให้เพิ่มคอลัมน์แยก |
+   | `price` | แปลง USD เป็น THB ก่อนเก็บใน `price` และเก็บราคา USD ต้นทางใน `priceUsd` |
    | `category` | `category` |
    | `thumbnail` (หรือ `images[0]`) | `imageUrl` |
    | `description` | `description` |
+   | `rating` | `rating` |
+   | ราคาและข้อมูลเรต | `priceUsd`, `usdToThbRate`, `exchangeRateDate`, `exchangeRateSource` |
    | — | `createdAt` ใช้ค่า default ของฐานข้อมูล |
 
-3. ตรวจ schema ก่อนนำเข้า: ปัจจุบัน `Product.price` และ `DecisionLog.price` เป็น `INTEGER`; แนะนำเปลี่ยนเป็น `NUMERIC(10,2)` เพื่อเก็บราคา THB หลังแปลงและปัดเศษสองตำแหน่งได้ครบ และให้ `DecisionLog.price` ใช้ THB แบบเดียวกัน
-4. ตรวจข้อมูลใน `Product` และ `DecisionLog` ก่อน import เพราะ `DecisionLog.productId` เป็น foreign key ไปยัง `Product.id`. ถ้ามีสินค้า mock หรือประวัติอยู่แล้ว ห้ามนำ ID 1–194 ไป upsert ทับโดยไม่ตรวจสอบ ให้สำรองข้อมูลและวางแผนย้าย ID/foreign key ก่อน; ถ้าฐานข้อมูลยังว่าง ให้นำเข้าโดยรักษา DummyJSON IDs และตั้ง sequence ของ `Product.id` ให้เริ่มหลัง ID สูงสุด
+3. ใช้ schema ใน `supabase/schema.sql`; `Product.price` และ `DecisionLog.price` เป็น `NUMERIC(10,2)` สำหรับราคา THB และ `Product` เก็บราคา USD/เรตแยกต่างหาก
+4. `scripts/seed.js` ตรวจ ID ที่มีอยู่ก่อน insert; ถ้าพบ ID เดียวกันแต่ชื่อสินค้าต่างกันจะหยุดโดยไม่เขียนทับ เพื่อป้องกันการเปลี่ยนความหมายของ foreign key ใน `DecisionLog`
 5. รัน import ด้วย `SUPABASE_SERVICE_ROLE_KEY` จากสคริปต์ฝั่ง server เท่านั้น ห้ามใส่ service key ใน client หรือ commit ลง Git จากนั้นตรวจจำนวนแถว, ตัวอย่างสินค้า, ราคา และการ join กับ `DecisionLog`
 
-รูปภาพใช้ URL จาก `thumbnail` ได้เลย ไม่ต้องอัปโหลดเข้า Storage เว้นแต่ทีมต้องการเก็บสำเนาไว้ใน bucket ของตัวเอง ทั้งนี้การ import API เข้า Supabase เป็นขั้นตอนแยกจากการอ่าน API ของหน้าเว็บ และยังต้องทำ migration/schema review ก่อนใช้กับฐานข้อมูลที่มีข้อมูลจริง
+รูปภาพใช้ URL จาก `thumbnail` ได้เลย ไม่ต้องอัปโหลดเข้า Storage เว้นแต่ทีมต้องการเก็บสำเนาไว้ใน bucket ของตัวเอง หลัง seed แล้วทุกหน้าต้องอ่านข้อมูลสินค้าและหมวดหมู่จาก Supabase เท่านั้น; หากฐานข้อมูลหรือ query มีปัญหาให้แสดง error state แทนการสลับไปใช้ API หรือข้อมูลจำลอง
 
 
 ---
@@ -131,14 +133,14 @@ graph LR
    - สร้างตาราง `DecisionLog` (id, productId FK, price, decisionStatus ENUM['BOUGHT', 'PASSED'], skipped boolean, timestamp)
    - สร้าง Index สำหรับ `decisionStatus`, `timestamp`, `category`
    - สร้าง Supabase Storage Bucket `product-images` (Public)
-2. **[`scripts/seed.js`](./scripts/seed.js)** — สคริปต์ยัดข้อมูลสินค้าตัวอย่าง
-   - นำเข้าสินค้าตัวอย่าง 500 รายการ ครอบคลุม 10 หมวดหมู่ พร้อมรูปภาพประกอบ
-   - รันซ้ำได้โดยข้ามรายการที่มีชื่ออยู่ในตารางแล้ว
+2. **[`scripts/seed.js`](./scripts/seed.js)** — สคริปต์นำเข้าสินค้าจาก DummyJSON ไปยัง Supabase
+   - นำเข้ารายการที่ API ให้บริการ พร้อมรูปภาพ เรต และราคา THB
+   - รันซ้ำได้โดยไม่เขียนทับ ID ที่มีอยู่; หยุดเมื่อพบ ID ชนกับชื่อสินค้าอื่น
    - รองรับคำสั่งรันผ่าน `node scripts/seed.js`
-3. **[`lib/products.js`](./lib/products.js)** — ตัวกลางดึงข้อมูลสินค้าจาก DummyJSON
-   - `getProducts({ q, category })`: ดึงสินค้าจาก DummyJSON แปลง USD เป็น THB แล้วค้นหาชื่อและกรองหมวดหมู่
-   - `getProductById(id)`: ดึงสินค้าตาม id จาก DummyJSON พร้อมราคา THB ที่แปลงแล้ว
-   - ใช้ USD/THB ล่าสุดจาก Frankfurter API (แคชหนึ่งชั่วโมง) และมีเรตสำรองตั้งด้วย `USD_TO_THB_FALLBACK_RATE`; สินค้า fallback ของโปรเจกต์มีราคา THB อยู่แล้ว
+3. **[`lib/products.js`](./lib/products.js)** — ตัวกลางอ่านแคตตาล็อกจาก Supabase
+   - `getProducts({ q, category })`: ค้นหา กรอง เรียง และแบ่งหน้าที่ Supabase โดยตรง
+   - `getProductById(id)`: อ่านรายละเอียดสินค้าตาม ID จาก Supabase
+   - ไม่มี DummyJSON หรือข้อมูลตัวอย่างเป็น runtime fallback; Frankfurter ใช้เฉพาะตอน seed เพื่อแปลงราคา USD เป็น THB
 4. **[`context/PauseCartContext.jsx`](./context/PauseCartContext.jsx)** — หัวใจของระบบ Cooling-off
    - State `items`: โครงสร้าง `{ productId, addedAt, readyAt, skipped }`
    - ซิงก์สองทางกับ `localStorage` (key: `'pause-cart'`)
@@ -156,8 +158,8 @@ graph LR
    - ปุ่มลิงก์เชื่อมต่อไปยังหน้า `/ready`
 
 #### ✅ เกณฑ์ความสำเร็จของโฟ (Definition of Done):
-- ฟังก์ชัน `getProducts` และ `getProductById` ดึงข้อมูลสินค้าจาก DummyJSON ได้ โดยมีข้อมูลตัวอย่างสำรองเมื่อ API ใช้งานไม่ได้
-- รัน seed ข้อมูล 500 รายการเข้า Supabase ได้ หากต้องการใช้ตาราง `Product` รองรับ foreign key ของ `DecisionLog`
+- ฟังก์ชัน `getProducts` และ `getProductById` อ่านจาก Supabase; เมื่อฐานข้อมูลใช้งานไม่ได้จะแสดง error state โดยไม่ใช้ข้อมูลจากแหล่งอื่น
+- รัน seed เพื่อเติมรายการจาก DummyJSON ลง Supabase โดยไม่ทับ ID ที่มีอยู่หรือสินค้าในประวัติเดิม
 - เมื่อกดเพิ่มสินค้าเข้าตะกร้า ข้อมูลถูกเซฟลง `localStorage` รีเฟรชหน้าแล้วของไม่หาย
 - สวิตช์ `devFastForward` สามารถสั่งเร่งเวลาให้หมดเวลาได้ในไม่กี่วินาที
 
@@ -175,7 +177,7 @@ graph LR
    - ปุ่ม Link ไปยังหน้ารายละเอียด `/products/${id}` สไตล์ Primary (radius 6px)
 2. **[`components/SearchFilter.jsx`](./components/SearchFilter.jsx)** — แถบค้นหาและตัวกรอง
    - ช่อง Input ค้นหาชื่อสินค้า พร้อมไอคอนแว่นขยาย
-   - Select เลือกหมวดหมู่จาก DummyJSON API endpoint `/products/categories`
+   - Select เลือกหมวดหมู่จากข้อมูลในตาราง `Product` ของ Supabase
    - ซิงก์ค่าลงใน URL query parameter (`?q=...&category=...`) ทันทีที่พิมพ์หรือเลือก
 3. **[`app/page.jsx`](./app/page.jsx)** — หน้าแรกของเว็บไซต์ (Landing Page)
    - Hero Section: เล่าปรัชญาของระบบ Pause (Friction is friend) ให้ดึงดูดใจ
@@ -263,7 +265,7 @@ graph LR
 
 1. **ทำ Database-Level Pagination ใน `app/products/page.jsx` & `lib/products.js`:**
    - ใช้คำสั่ง `.range(from, to)` ใน Supabase Query เพื่อดึงเฉพาะ 24 ชิ้นของหน้านั้นมาจากฐานข้อมูลโดยตรง (เช่น หน้า 1: `0..23`, หน้า 2: `24..47`)
-   - เลิกดึงสินค้าทั้งหมด 194 รายการมาตัดใน JavaScript เพื่อลดขนาดข้อมูล Network Payload ลงกว่า 90%
+   - เลิกดึงสินค้าทั้งหมดมาตัดใน JavaScript เพื่อลดขนาดข้อมูล Network Payload ลงกว่า 90%
 2. **ทำ Selective Column Projection (ดึงเฉพาะคอลัมน์ที่จำเป็น):**
    - หน้ารายการสินค้าให้ดึงเฉพาะฟิลด์ที่การ์ดต้องแสดงผล: `.select('id, name, price, category, imageUrl, rating', { count: 'exact' })`
    - ไม่ดึง `description` ขนาดยาว เพื่อประหยัด Bandwidth และเวลาในการแปลง JSON
@@ -285,7 +287,7 @@ graph LR
 * **โฟ:**
   1. สร้างโปรเจกต์บน Supabase Dashboard และคัดลอก Keys ลงใน `.env.local`
   2. รัน SQL ใน [`supabase/schema.sql`](./supabase/schema.sql) และสร้าง Storage Bucket `product-images`
-  3. ใช้ DummyJSON เป็นแหล่งข้อมูลสินค้า (ตั้ง `DUMMYJSON_BASE_URL` ได้; ไม่ต้องใช้ API key)
+  3. ใช้ Supabase ตาราง `Product` เป็นแหล่งข้อมูลสินค้า; ใช้ DummyJSON เฉพาะเป็นแหล่งนำเข้าผ่าน seed script (ไม่ต้องใช้ API key)
   4. รัน [`scripts/seed.js`](./scripts/seed.js) เพื่อเติมตาราง `Product` เมื่อต้องใช้ foreign key กับ `DecisionLog`
   5. วางระบบ Global State ใน [`context/PauseCartContext.jsx`](./context/PauseCartContext.jsx) พร้อมทดสอบซิงก์กับ `localStorage`
 * **กิต:**

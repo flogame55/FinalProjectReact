@@ -1,5 +1,5 @@
 // ============================================================================
-// 👤 โฟ — scripts/seed.js (Import DummyJSON สินค้า 194 รายการขึ้น Supabase)
+// 👤 โฟ — scripts/seed.js (Import DummyJSON catalog into Supabase)
 // ============================================================================
 // วิธีรัน: node scripts/seed.js
 // ============================================================================
@@ -11,7 +11,7 @@ import { convertUsdToThb, getUsdToThbRate } from '../lib/currency.js'
 dotenv.config({ path: '.env.local' })
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 if (!supabaseUrl || !supabaseKey) {
   console.error('❌ [โฟ] กรุณาตั้งค่า NEXT_PUBLIC_SUPABASE_URL และ SUPABASE_SERVICE_ROLE_KEY ใน .env.local ก่อนรัน seed')
@@ -43,17 +43,44 @@ async function seed() {
       id: Number(p.id),
       name: p.title || 'สินค้าไม่มีชื่อ',
       price: priceThb,
+      priceUsd,
+      usdToThbRate: exchange.rate,
+      exchangeRateDate: exchange.date,
+      exchangeRateSource: exchange.source,
       category: p.category || 'other',
       imageUrl: p.thumbnail || (Array.isArray(p.images) ? p.images[0] : '') || '',
       description: p.description || '',
+      rating: Number.isFinite(Number(p.rating)) ? Number(p.rating) : null,
     }
   })
 
-  console.log(`🚀 4. กำลังนำเข้าสินค้า ${formattedProducts.length} รายการลงตาราง 'Product' ใน Supabase...`)
-  // ทำ Upsert โดยใช้ id เพื่อให้รันซ้ำได้โดยไม่ติด duplicate key error
+  const { data: existingProducts, error: lookupError } = await supabase
+    .from('Product')
+    .select('id, name')
+
+  if (lookupError) {
+    throw new Error(`ตรวจสอบ ID สินค้าเดิมใน Supabase ไม่สำเร็จ: ${lookupError.message}`)
+  }
+
+  const existingById = new Map((existingProducts || []).map((product) => [Number(product.id), product.name]))
+  const conflicts = formattedProducts.filter((product) => (
+    existingById.has(product.id) && existingById.get(product.id) !== product.name
+  ))
+  if (conflicts.length) {
+    throw new Error(`พบ Product ID ที่มีสินค้าอื่นใช้อยู่แล้ว (${conflicts.slice(0, 5).map((product) => product.id).join(', ')}). ยกเลิกเพื่อป้องกันการทับข้อมูลและประวัติเดิม`)
+  }
+
+  const productsToInsert = formattedProducts.filter((product) => !existingById.has(product.id))
+  console.log(`🚀 4. กำลังนำเข้าสินค้าใหม่ ${productsToInsert.length} จาก ${formattedProducts.length} รายการลง Supabase...`)
+  if (productsToInsert.length === 0) {
+    console.log('ℹ️ สินค้าทั้งหมดมีอยู่ใน Supabase แล้ว ไม่มีการเขียนทับข้อมูลเดิม')
+    return
+  }
+
+  // ใช้ insert กับเฉพาะ ID ที่ยังไม่มี เพื่อไม่เขียนทับ Product หรือ DecisionLog เดิม
   const { data: inserted, error } = await supabase
     .from('Product')
-    .upsert(formattedProducts, { onConflict: 'id' })
+    .insert(productsToInsert)
     .select('id')
 
   if (error) {
@@ -61,8 +88,7 @@ async function seed() {
     process.exit(1)
   }
 
-  console.log(`🎉 สำเร็จเรียบร้อย! นำเข้าสินค้าขึ้นตาราง 'Product' บน Supabase แล้ว ${inserted?.length || formattedProducts.length} รายการ!`)
-  console.log('✨ ตอนนี้ในฐานข้อมูลมีสินค้า ID 1-194 ตรงกับหน้าเว็บ 100% แล้วครับ!')
+  console.log(`🎉 สำเร็จ! เพิ่มสินค้า ${inserted?.length || 0} รายการลง Supabase`)
 }
 
 seed().catch((err) => {
