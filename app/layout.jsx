@@ -1,4 +1,5 @@
 import './globals.css'
+import './design-preview.css'
 import Link from 'next/link'
 import Nav from '@/components/Nav'
 import { PauseCartProvider } from '@/context/PauseCartContext'

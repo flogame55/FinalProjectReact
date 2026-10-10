@@ -11,6 +11,8 @@ export default function Nav() {
   const { readyItems = [] } = usePauseCart() || {}
   const readyCount = readyItems.length
 
+  if (pathname.startsWith('/design-preview')) return null
+
   const links = [
     { href: '/products', label: '1. เลือกดูสินค้า' },
     { href: '/cart', label: '2. ตะกร้าพักคิด' },
