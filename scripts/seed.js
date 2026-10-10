@@ -6,7 +6,8 @@
 
 import { createClient } from '@supabase/supabase-js'
 import dotenv from 'dotenv'
-import { convertUsdToThb, getUsdToThbRate } from '../lib/currency.js'
+import { getUsdToThbRate } from '../lib/currency.js'
+import { convertUsdToThb } from '../lib/pricing.js'
 
 dotenv.config({ path: '.env.local' })
 

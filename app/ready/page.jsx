@@ -1,13 +1,19 @@
 'use client'
 
+// ============================================================================
+// 📌 Client Component: app/ready/page.jsx (Decision Gate)
+// - เหตุผลที่เป็น Client Component: จัดการ State การตัดสินใจที่ซับซ้อนของผู้ใช้
+//   (เลือกซื้อเปิด CheckoutForm, เลือกผ่านคำนวณเงินที่ประหยัดได้, ลบสินค้าออกจาก cart context)
+//   และทำหน้าที่ประสานงานส่งข้อมูลไปยัง Server Actions (confirmPurchaseAction, passItemAction)
+// ============================================================================
+
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePauseCart } from '@/context/PauseCartContext'
 import CheckoutForm from '@/components/CheckoutForm'
 import { confirmPurchaseAction, passItemAction } from '@/app/actions'
-
-const formatPrice = (value) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 2 }).format(Number(value) || 0)
+import { formatPrice } from '@/lib/presentation'
 
 export default function ReadyPage() {
   const { readyItems, removeItem, hydrated, sessionId } = usePauseCart()

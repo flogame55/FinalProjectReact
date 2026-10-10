@@ -1,3 +1,10 @@
+// ============================================================================
+// 📌 Server Component: app/products/page.jsx (Catalog Page)
+// - เหตุผลที่เป็น Server Component: อ่าน searchParams จาก URL และทำ Database Pagination
+//   ดึงเฉพาะหน้าที่ต้องการ (24 รายการ) จาก Supabase ตรงๆ ช่วยลด Network Payload ได้กว่า 90%
+// - Data Fetching: SSR (On-Demand ตาม Query Parameters q, category, sort, page)
+// ============================================================================
+
 import Link from 'next/link'
 import SearchFilter from '@/components/SearchFilter'
 import ProductCard from '@/components/ProductCard'
