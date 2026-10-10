@@ -4,13 +4,13 @@ import { getProductById } from '@/lib/products'
 import { formatPrice } from '@/lib/presentation'
 import UiIcon from '@/components/UiIcon'
 
-export const metadata = { title: 'ชำระเงินสำเร็จ · Pause' }
+export const metadata = { title: 'ยืนยันคำสั่งซื้อ · Pause' }
 export const dynamic = 'force-dynamic'
 
 const paymentLabels = {
-  promptpay: 'พร้อมเพย์ (จำลอง)',
-  credit_card: 'บัตรเครดิต / เดบิต (จำลอง)',
-  cod: 'เก็บเงินปลายทาง (จำลอง)',
+  promptpay: 'พร้อมเพย์',
+  credit_card: 'บัตรเครดิต / เดบิต (ข้อมูลทดสอบ)',
+  cod: 'เก็บเงินปลายทาง',
 }
 
 export default async function PaymentSuccessPage({ searchParams }) {
@@ -18,8 +18,6 @@ export default async function PaymentSuccessPage({ searchParams }) {
   const productId = Number(params?.productId)
   const method = paymentLabels[params?.method] ? params.method : 'promptpay'
   const product = Number.isInteger(productId) && productId > 0 ? await getProductById(productId) : null
-  const isCod = method === 'cod'
-
   return (
     <div className="mx-auto max-w-2xl space-y-7 pb-12 sm:space-y-8">
       <section className="surface overflow-hidden text-center">
@@ -29,16 +27,16 @@ export default async function PaymentSuccessPage({ searchParams }) {
           </div>
           <p className="eyebrow mt-7">DEMO CHECKOUT · สำเร็จ</p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-[#20211F] sm:text-4xl">
-            {isCod ? 'ยืนยันคำสั่งซื้อแล้ว' : 'ชำระเงินสำเร็จ'}
+            ยืนยันคำสั่งซื้อแล้ว
           </h1>
           <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-[#6B6B6B]">
-            {isCod ? 'บันทึกตัวอย่างคำสั่งซื้อเก็บเงินปลายทางเรียบร้อยแล้ว' : 'บันทึกตัวอย่างการชำระเงินเรียบร้อยแล้ว'}
+            บันทึกรายการของคุณแล้ว
           </p>
         </div>
 
         <div className="px-5 pb-6 sm:px-10 sm:pb-10">
           <div role="note" className="mb-6 rounded-[8px] border border-amber-200 bg-amber-50 px-4 py-3 text-left text-xs leading-6 text-amber-900">
-            โหมดสาธิตเท่านั้น ไม่มีการโอนหรือเรียกเก็บเงินจริง QR และข้อมูลบัตรก่อนหน้านี้เป็นตัวอย่าง และไม่มีข้อมูลบัตรถูกจัดเก็บ
+            ระบบไม่ได้ตรวจสอบยอดเงินที่โอน และไม่ได้เรียกเก็บเงินจากบัตร การยืนยันหน้านี้จะบันทึกการตัดสินใจซื้อทันทีเท่านั้น หากสแกนพร้อมเพย์แล้ว โปรดตรวจรายการในแอปธนาคารด้วยตนเอง
           </div>
 
           <div className="rounded-[12px] border border-[#E8E8EC] bg-white p-4 text-left sm:p-5">
@@ -53,7 +51,7 @@ export default async function PaymentSuccessPage({ searchParams }) {
               </div>
               <p className="shrink-0 text-sm font-semibold tabular-nums text-[#20211F]">{product ? formatPrice(product.price) : '—'}</p>
             </div>
-            {isCod && <p className="mt-4 border-t border-[#E8E8EC] pt-4 text-xs leading-6 text-[#6B6B6B]">ตัวอย่างนี้ยังไม่ใช่คำสั่งซื้อจริง และจะไม่มีพัสดุถูกจัดส่ง</p>}
+            <p className="mt-4 border-t border-[#E8E8EC] pt-4 text-xs leading-6 text-[#6B6B6B]">เว็บไซต์นี้ยังไม่มีระบบจัดส่งสินค้า และจะไม่ตรวจสอบหรือยืนยันการชำระเงินอัตโนมัติ</p>
           </div>
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">

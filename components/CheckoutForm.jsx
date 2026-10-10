@@ -1,16 +1,21 @@
 'use client'
 
-import { useId, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import Image from 'next/image'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { checkoutSchema } from '@/lib/schemas/checkout'
 import { formatPrice } from '@/lib/presentation'
 import UiIcon from '@/components/UiIcon'
+import QRCode from 'qrcode'
+
+const PROMPTPAY_PHONE = '0925419424'
 
 export default function CheckoutForm({ item, onConfirm, onCancel, checkoutAvailable = false }) {
   const formId = useId()
   const [submitError, setSubmitError] = useState('')
+  const [paymentError, setPaymentError] = useState('')
+  const [card, setCard] = useState({ number: '', expiry: '', cvv: '', name: '' })
   const product = item.product
   const { register, watch, handleSubmit, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(checkoutSchema),
@@ -27,8 +32,19 @@ export default function CheckoutForm({ item, onConfirm, onCancel, checkoutAvaila
   async function onSubmit(formData) {
     if (!checkoutAvailable || !onConfirm) return
     setSubmitError('')
+    if (formData.paymentMethod === 'credit_card') {
+      const cardError = validateDemoCard(card)
+      setPaymentError(cardError)
+      if (cardError) return
+    }
     try {
-      const result = await onConfirm(formData)
+      // Never send card fields to the server action; this project does not process card payments.
+      const result = await onConfirm({
+        fullName: formData.fullName,
+        address: formData.address,
+        phone: formData.phone,
+        paymentMethod: formData.paymentMethod,
+      })
       if (result?.ok === false) setSubmitError(result.error || 'ยังยืนยันรายการไม่ได้ กรุณาลองอีกครั้ง')
     } catch {
       setSubmitError('ยังยืนยันรายการไม่ได้ กรุณาลองอีกครั้ง')
@@ -115,10 +131,10 @@ export default function CheckoutForm({ item, onConfirm, onCancel, checkoutAvaila
                   })}
                 </div>
                 {errorFor('paymentMethod')}
-                {selectedPaymentMethod === 'promptpay' && <DemoPromptPay amount={product?.price} />}
-                {selectedPaymentMethod === 'credit_card' && <DemoCard />}
+                {selectedPaymentMethod === 'promptpay' && <PromptPayQr amount={product?.price} />}
+                {selectedPaymentMethod === 'credit_card' && <DemoCard formId={formId} card={card} setCard={setCard} error={paymentError} onChange={() => setPaymentError('')} />}
                 {selectedPaymentMethod === 'cod' && <div className="mt-3 flex gap-3 rounded-[8px] border border-[#E8E8EC] bg-[#F8F8F7] p-4"><UiIcon name="bag" size={18} className="mt-0.5 shrink-0 text-[#6B6B6B]" /><p className="text-[11px] leading-5 text-[#6B6B6B]">ตัวอย่างคำสั่งซื้อเก็บเงินปลายทาง ระบบจะจำลองการยืนยันคำสั่งซื้อโดยไม่เรียกเก็บเงิน</p></div>}
-                <p className="mt-3 rounded-[6px] bg-amber-50 px-3 py-2 text-[10px] leading-5 text-amber-900">โหมดสาธิตเท่านั้น: ไม่มีการตัดเงินจริง, QR นี้สแกนชำระไม่ได้ และไม่ต้องกรอกข้อมูลบัตรจริง</p>
+                <p className="mt-3 rounded-[6px] bg-amber-50 px-3 py-2 text-[10px] leading-5 text-amber-900">ระบบไม่ตรวจสอบยอดโอนและไม่เรียกเก็บเงินอัตโนมัติ การกดยืนยันจะบันทึกคำสั่งซื้อทันที ส่วนข้อมูลบัตรใช้ตรวจรูปแบบบนอุปกรณ์นี้เท่านั้นและไม่ถูกส่งไปยังเซิร์ฟเวอร์</p>
               </fieldset>
             </div>
           </div>
@@ -139,7 +155,7 @@ export default function CheckoutForm({ item, onConfirm, onCancel, checkoutAvaila
         <div className="flex items-end justify-between gap-3 py-5"><span className="text-sm font-medium">ยอดสินค้า</span><span className="text-2xl font-semibold tracking-tight tabular-nums">{formatPrice(product?.price)}</span></div>
         <p className="mb-5 text-[11px] leading-5 text-[#777780]">ยอดนี้ยังไม่รวมค่าจัดส่ง และยังไม่ใช่ยอดเรียกเก็บจริง</p>
         {submitError && <p role="alert" className="mb-4 text-sm leading-6 text-red-600">{submitError}</p>}
-        <button type="submit" disabled={!checkoutAvailable || !onConfirm || isSubmitting} aria-describedby={!checkoutAvailable ? `${formId}-unavailable` : undefined} className="button-primary w-full">{isSubmitting ? 'กำลังบันทึกรายการสาธิต…' : checkoutAvailable ? selectedPaymentMethod === 'cod' ? 'ยืนยันคำสั่งซื้อแบบสาธิต' : `จำลองชำระเงิน ${formatPrice(product?.price)}` : 'ยังไม่เปิดรับคำสั่งซื้อ'}</button>
+        <button type="submit" disabled={!checkoutAvailable || !onConfirm || isSubmitting} aria-describedby={!checkoutAvailable ? `${formId}-unavailable` : undefined} className="button-primary w-full">{isSubmitting ? 'กำลังบันทึกคำสั่งซื้อ…' : checkoutAvailable ? `ยืนยันคำสั่งซื้อ ${formatPrice(product?.price)}` : 'ยังไม่เปิดรับคำสั่งซื้อ'}</button>
         <button type="button" onClick={onCancel} disabled={isSubmitting} className="button-quiet mt-2 w-full">ยกเลิก · กลับไปคิดอีกครั้ง</button>
         <p className="mt-4 text-center text-[10px] leading-5 text-[#85858d]">คุณยังเปลี่ยนใจได้ก่อนยืนยันรายการ</p>
       </aside>
@@ -147,43 +163,43 @@ export default function CheckoutForm({ item, onConfirm, onCancel, checkoutAvaila
   )
 }
 
-function DemoPromptPay({ amount }) {
-  const size = 29
-  const finderAt = [[1, 1], [1, size - 8], [size - 8, 1]]
-  const cells = []
-
-  for (let row = 0; row < size; row += 1) {
-    for (let column = 0; column < size; column += 1) {
-      const finder = finderAt.find(([top, left]) => row >= top && row < top + 7 && column >= left && column < left + 7)
-      let filled
-      if (finder) {
-        const [top, left] = finder
-        const x = column - left
-        const y = row - top
-        filled = x === 0 || x === 6 || y === 0 || y === 6 || (x >= 2 && x <= 4 && y >= 2 && y <= 4)
-      } else {
-        filled = (row * 13 + column * 7 + row * column * 3) % 11 < 5
-      }
-      if (filled) cells.push(<rect key={`${row}-${column}`} x={column} y={row} width="1" height="1" rx=".08" />)
-    }
-  }
-
+function PromptPayQr({ amount }) {
+  const [qr, setQr] = useState('')
+  const [qrError, setQrError] = useState('')
+  useEffect(() => {
+    let active = true
+    setQr('')
+    setQrError('')
+    QRCode.toDataURL(createPromptPayPayload(PROMPTPAY_PHONE, amount), { errorCorrectionLevel: 'M', margin: 2, width: 320 })
+      .then((dataUrl) => { if (active) setQr(dataUrl) })
+      .catch(() => { if (active) setQrError('สร้าง QR ไม่สำเร็จ กรุณาลองโหลดหน้าใหม่') })
+    return () => { active = false }
+  }, [amount])
   return (
     <div className="mt-3 flex flex-col items-center gap-3 rounded-[8px] border border-[#E8E8EC] bg-white p-4 sm:flex-row sm:items-center">
-      <div className="relative size-36 shrink-0 rounded-[6px] border border-[#E8E8EC] bg-white p-2" aria-label="QR จำลอง ไม่สามารถสแกนชำระเงินจริงได้">
-        <svg viewBox={`0 0 ${size} ${size}`} className="size-full text-[#20211F]" fill="currentColor" aria-hidden="true">{cells}</svg>
-        <span className="absolute inset-x-0 bottom-3 mx-auto w-max rounded-[3px] bg-white px-1.5 py-0.5 text-[8px] font-bold tracking-widest text-[#6366F1]">DEMO</span>
-      </div>
+      {qr ? <Image unoptimized src={qr} alt={`QR พร้อมเพย์สำหรับยอด ${formatPrice(amount)}`} width={144} height={144} className="size-36 shrink-0 rounded-[6px] border border-[#E8E8EC] bg-white p-1" /> : <div className="flex size-36 shrink-0 items-center justify-center rounded-[6px] border border-[#E8E8EC] bg-[#F8F8F7] text-xs text-[#777780]" role="status">{qrError || 'กำลังสร้าง QR…'}</div>}
       <div className="text-center sm:text-left">
         <p className="text-sm font-semibold text-[#20211F]">พร้อมเพย์</p>
-        <p className="mt-1 text-xs text-[#6B6B6B]">   {formatPrice(amount)}</p>
-        <p className="mt-2 text-[10px] leading-5 text-[#85858d]">QR นี้สร้างเพื่อแสดงหน้าตาเท่านั้น ไม่สามารถใช้โอนเงินจริงได้</p>
+        <p className="mt-1 text-xs text-[#6B6B6B]">{formatPrice(amount)}</p>
+        <p className="mt-1 text-[10px] text-[#777780]">สแกนด้วยแอปธนาคารเพื่อโอนเข้าพร้อมเพย์ {PROMPTPAY_PHONE}</p>
+        <p className="mt-2 text-[10px] leading-5 text-amber-800">แอปจะไม่ตรวจสอบว่าโอนสำเร็จหรือไม่ กรุณาตรวจชื่อผู้รับและยอดเงินก่อนยืนยัน</p>
       </div>
     </div>
   )
 }
 
-function DemoCard() {
+function DemoCard({ formId, card, setCard, error, onChange }) {
+  function update(field, value) {
+    onChange()
+    setCard((previous) => ({ ...previous, [field]: value }))
+  }
+  function formatCardNumber(value) {
+    return value.replace(/\D/g, '').slice(0, 19).replace(/(.{4})/g, '$1 ').trim()
+  }
+  function formatExpiry(value) {
+    const digits = value.replace(/\D/g, '').slice(0, 4)
+    return digits.length > 2 ? `${digits.slice(0, 2)} / ${digits.slice(2)}` : digits
+  }
   return (
     <div className="mt-3 rounded-[8px] border border-[#E8E8EC] bg-white p-4">
       <div className="flex items-center justify-between rounded-[8px] bg-[#252527] p-4 text-white">
@@ -191,14 +207,60 @@ function DemoCard() {
         <span aria-hidden="true" className="flex"><i className="size-5 rounded-full bg-red-500/90" /><i className="-ml-2 size-5 rounded-full bg-amber-400/90" /></span>
         <span className="sr-only">ตัวอย่างบัตรจำลอง</span>
       </div>
-      <div className="mt-3 grid gap-2 text-[10px] text-[#777780] sm:grid-cols-[1fr_auto]">
-        <div className="rounded-[6px] bg-[#F8F8F7] px-3 py-2.5"><span className="block text-[9px] uppercase tracking-wider">หมายเลขบัตรตัวอย่าง</span><span className="mt-1 block font-mono text-xs tracking-wider text-[#39393E]">•••• •••• •••• 4242</span></div>
-        <div className="grid grid-cols-2 gap-2">
-          <div className="rounded-[6px] bg-[#F8F8F7] px-3 py-2.5"><span className="block text-[9px] uppercase tracking-wider">หมดอายุ</span><span className="mt-1 block font-mono text-xs text-[#39393E]">MM / YY</span></div>
-          <div className="rounded-[6px] bg-[#F8F8F7] px-3 py-2.5"><span className="block text-[9px] uppercase tracking-wider">รหัส</span><span className="mt-1 block font-mono text-xs text-[#39393E]">•••</span></div>
-        </div>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <label className="text-[10px] text-[#777780] sm:col-span-2">ชื่อบนบัตร<input autoComplete="cc-name" value={card.name} onChange={(event) => update('name', event.target.value)} className="input-field mt-1 w-full" placeholder="ชื่อผู้ถือบัตร" /></label>
+        <label className="text-[10px] text-[#777780] sm:col-span-2">หมายเลขบัตร<input id={`${formId}-card-number`} autoComplete="cc-number" inputMode="numeric" value={card.number} onChange={(event) => update('number', formatCardNumber(event.target.value))} className="input-field mt-1 w-full font-mono" placeholder="0000 0000 0000 0000" /></label>
+        <label className="text-[10px] text-[#777780]">วันหมดอายุ<input autoComplete="cc-exp" inputMode="numeric" value={card.expiry} onChange={(event) => update('expiry', formatExpiry(event.target.value))} className="input-field mt-1 w-full font-mono" placeholder="MM / YY" /></label>
+        <label className="text-[10px] text-[#777780]">CVV<input autoComplete="cc-csc" inputMode="numeric" type="password" value={card.cvv} onChange={(event) => update('cvv', event.target.value.replace(/\D/g, '').slice(0, 4))} className="input-field mt-1 w-full font-mono" placeholder="123" /></label>
       </div>
-      <p className="mt-2 text-[10px] leading-5 text-[#85858d]">นี่คือข้อมูลตัวอย่าง ไม่มีช่องกรอกและไม่มีการบันทึกข้อมูลบัตร</p>
+      {error && <p role="alert" className="mt-3 text-xs text-red-600">{error}</p>}
+      <p className="mt-3 rounded bg-amber-50 px-3 py-2 text-[10px] leading-5 text-amber-900">หน้าสาธิตนี้ไม่เชื่อมต่อธนาคารและไม่ตัดเงินจริง ข้อมูลบัตรอยู่ในหน่วยความจำของหน้านี้ชั่วคราว ไม่ถูกส่งหรือบันทึก กรุณาใช้ข้อมูลทดสอบเท่านั้น</p>
     </div>
   )
+}
+
+function validateDemoCard(card) {
+  const digits = card.number.replace(/\D/g, '')
+  if (!card.name.trim()) return 'กรุณากรอกชื่อบนบัตร'
+  if (digits.length < 13 || digits.length > 19 || !passesLuhn(digits)) return 'หมายเลขบัตรไม่ถูกต้อง (ใช้หมายเลขทดสอบ เช่น 4242 4242 4242 4242)'
+  const match = card.expiry.match(/^(\d{2})\s*\/\s*(\d{2})$/)
+  if (!match) return 'กรุณากรอกวันหมดอายุเป็น MM / YY'
+  const month = Number(match[1])
+  const year = 2000 + Number(match[2])
+  const now = new Date()
+  if (month < 1 || month > 12 || year < now.getFullYear() || (year === now.getFullYear() && month < now.getMonth() + 1)) return 'วันหมดอายุบัตรไม่ถูกต้อง'
+  if (!/^\d{3,4}$/.test(card.cvv)) return 'กรุณากรอกรหัส CVV 3–4 หลัก'
+  return ''
+}
+
+function passesLuhn(number) {
+  let sum = 0
+  let double = false
+  for (let index = number.length - 1; index >= 0; index -= 1) {
+    let digit = Number(number[index])
+    if (double) {
+      digit *= 2
+      if (digit > 9) digit -= 9
+    }
+    sum += digit
+    double = !double
+  }
+  return sum % 10 === 0
+}
+
+function createPromptPayPayload(phone, amount) {
+  const digits = phone.replace(/\D/g, '')
+  const normalizedPhone = digits.startsWith('0') ? `0066${digits.slice(1)}` : digits
+  const amountText = Number(amount).toFixed(2)
+  const mobileTag = `01${String(normalizedPhone.length).padStart(2, '0')}${normalizedPhone}`
+  const promptPayTag = `0016A000000677010111${mobileTag}`
+  const merchantTag = `29${String(promptPayTag.length).padStart(2, '0')}${promptPayTag}`
+  const fields = `000201010212${merchantTag}530376454${String(amountText.length).padStart(2, '0')}${amountText}5802TH6304`
+  let crc = 0xffff
+  for (const character of fields) {
+    crc ^= character.charCodeAt(0) << 8
+    for (let bit = 0; bit < 8; bit += 1) crc = crc & 0x8000 ? (crc << 1) ^ 0x1021 : crc << 1
+    crc &= 0xffff
+  }
+  return `${fields}${crc.toString(16).toUpperCase().padStart(4, '0')}`
 }
